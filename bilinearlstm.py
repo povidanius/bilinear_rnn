@@ -133,7 +133,7 @@ https://github.com/povidanius/bilinear_rnn
 
                     I = tf.nn.sigmoid(dot(tf.transpose(dot(W1i, X), [1, 0, 2]), W2i) + dot(tf.transpose(dot(U1i, H), [1, 0, 2]), U2i) + Bi)
                     F = tf.nn.sigmoid(dot(tf.transpose(dot(W1f, X), [1, 0, 2]), W2f) + dot(tf.transpose(dot(U1f, H), [1, 0, 2]), U2f) + Bf)
-                    F = tf.nn.sigmoid(dot(tf.transpose(dot(W1o, X), [1, 0, 2]), W2o) + dot(tf.transpose(dot(U1o, H), [1, 0, 2]), U2o) + Bo)
+                    O = tf.nn.sigmoid(dot(tf.transpose(dot(W1o, X), [1, 0, 2]), W2o) + dot(tf.transpose(dot(U1o, H), [1, 0, 2]), U2o) + Bo)
                     C_tilde = tf.nn.tanh(dot(tf.transpose(dot(W1c, X), [1, 0, 2]), W2c) + dot(tf.transpose(dot(U1c, H), [1, 0, 2]), U2c) + Bc)
 
                     
