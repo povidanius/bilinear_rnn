@@ -33,12 +33,12 @@ class EGRUCell(tf.contrib.rnn.RNNCell):
 		    ir = tf.nn.sigmoid(ir)
                     i, r = tf.split(value=ir, num_or_size_splits=[input_size, self._num_units], axis=1)
           with tf.variable_scope("uc"):  # update gate and candidate
-                    uc =  linear([inputs, r * state], 2 * self._num_units, True)
+                    uc =  linear([i * inputs, r * state], 2 * self._num_units, True)
                     u, c = tf.split(axis=1, num_or_size_splits=2, value=uc)
                     u = tf.nn.sigmoid(u)
 		    c = tf.nn.tanh(c)
 
-          new_h = u * state  + (1 - u) * c 
+          new_h = u * state  + (1 - u) * c
 
         return new_h, new_h
 
