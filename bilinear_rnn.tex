@@ -1,0 +1,297 @@
+\documentclass[a4paper,11pt]{article}
+ 
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[ansinew]{inputenc}
+\usepackage{bbold}
+\usepackage{bold-extra}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{gensymb}
+\usepackage{mathtools}
+\usepackage{subfigure}
+\usepackage{theorem}
+\usepackage{bm}
+\usepackage{xcolor}
+\usepackage[unicode]{hyperref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{tikz}
+\usepackage{graphicx}
+\usepackage{lipsum}
+\usetikzlibrary{positioning}
+\usepackage{tikz}
+\usepackage{empheq}
+\usepackage{booktabs}
+\usepackage{authblk}
+
+%\usepackage{3dplot} %requires 3dplot.sty to be in same directory, or in your LaTeX installation
+%\usepackage{amsmath,amsfonts,amssymb,amsthm,epsfig,epstopdf,titling,url,array}
+\usepackage{xstring}
+
+%\theoremstyle{definition}
+%\newtheorem{defn}{Definition}[section]
+%\newtheorem{conj}{Conjecture}[section]
+%\newtheorem{exmp}{Example}[section]
+\makeatletter
+\newcommand{\change@uppercase@math}{%
+  \count@=`\A
+  \loop
+    \mathcode\count@\count@
+    \ifnum\count@<`\Z
+    \advance\count@\@ne
+  \repeat}
+
+\newcommand{\LSTM}[1]{
+  \mathrm{LSTM}(
+  %(\begingroup\change@uppercase@math#1\endgroup)
+}
+
+\newcommand{\UPDATE}[1]{
+  \mathrm{UPDATE}(
+  %(\begingroup\change@uppercase@math#1\endgroup)
+}
+
+\newcommand{\READ}[1]{
+  \mathrm{READ}(
+ % (\begingroup\change@uppercase@math#1\endgroup)
+}
+
+\newcommand{\ADD}[1]{
+  \mathrm{ADD}(
+ % (\begingroup\change@uppercase@math#1\endgroup)
+}
+\newcommand{\MUL}[1]{
+  \mathrm{MUL}(
+ % (\begingroup\change@uppercase@math#1\endgroup)
+}
+
+\newcommand{\CIRC}[1]{
+  \mathrm{circ}(
+ % (\begingroup\change@uppercase@math#1\endgroup)
+}
+
+\newcommand{\ReLU}[1]{
+  \mathrm{ReLU}(
+ % (\begingroup\change@uppercase@math#1\endgroup)
+}
+
+
+\newcommand{\softmax}[1]{
+  \mathrm{softmax}(
+ % (\begingroup\change@uppercase@math#1\endgroup)
+}
+
+
+\makeatother
+
+\newcommand*\GetListMember[2]{\StrBetween[#2,\number\numexpr#2+1]{,#1,},,\par}%
+\newcommand{\tikzmark}[1]{\tikz[overlay,remember picture] \node (#1) {};}
+
+\def\spvec#1{\left(\vcenter{\halign{\hfil$##$\hfil\cr \spvecA#1;;}}\right)}
+\def\spvecA#1;{\if;#1;\else #1\cr \expandafter \spvecA \fi}
+
+\newlength{\MidRadius}
+\newcommand*{\CircularSequence}[3]{%
+    % #1 = outer circle radius
+    % #2 = inner circle radius
+    % #3 = seqeunce
+    \StrCount{#3}{,}[\NumberOfElements]
+    \pgfmathsetmacro{\AngleSep}{360/(\NumberOfElements+1)}
+    \pgfmathsetlength{\MidRadius}{(#1+#2)/2}
+    \draw [red,  ultra thick] circle (#2);
+    \draw [blue, ultra thick] circle (#1);
+%    \draw [thick,->] (0, 0) -- (1.0, 0);
+%    \draw [thick,->] (0, 0) -- (0.0, 1.0);
+    \foreach [count = \Count] \Angle in {0,\AngleSep,..., 360} {%
+        \draw [gray, ultra thick] (\Angle:#2) -- (\Angle:#1);
+        \pgfmathsetmacro{\MidPoint}{\Angle+\AngleSep/2}
+        \node at (\MidPoint:\MidRadius) {\GetListMember{#3}{\Count}};
+    }%7
+}%
+
+
+\author{Povilas Daniu\v{s}is}
+\author[1]{Povilas Daniu\v{s}is \thanks{povilas.daniusis@gmail.com}}
+
+
+\title{Bilinear recurrent neural networks (draft)}
+
+\begin{document}
+\maketitle
+\section{Introduction}
+
+In this article we aim to use bilinear products for deriving new modification of long short-term memory (LSTM) \cite{Hochreiter} and gated 
+recurrent unit (GRU) \cite{Chung} recurrent neural networks.
+
+We will start our analysis with formulation of conventional LSTM and GRU, following by the description of 
+suggested bilinear analogues, and presentation of the results of conducted computer experiments.
+
+Tensorflow \cite{Tensorflow} implementation of suggested bilinear LSTM/GRU networks can be 
+downloaded from \url{https://github.com/povidanius/bilinear_rnn}.
+
+
+
+
+\subsection{Conventional LSTM and GRU}
+
+Let $x_{t} \in \mathbb{R}^{D_{x}}$ be input vectors. By $\bullet$ we denote element-wise multiplication. 
+
+\subsubsection{LSTM}
+
+An update of LSTM state $(c_{t}, h_{t})^{T}$ is defined by:
+\begin{align}
+\begin{split}
+\label{LSTM}
+i_{t} &=\sigma(W^{i}x_{t} + U^{i}h_{t-1} + b^{i})\\
+f_{t} &=\sigma(W^{f}x_{t} + U^{f}h_{t-1} + b^{f})\\
+o_{t} &=\sigma(W^{o}x_{t} + U^{o}h_{t-1} + b^{o})\\
+\tilde{c}_{t} &= \tanh(W^{c}x_{t} + U^{c}h_{t-1} + b^{c})\\
+c_{t} &=f_{t} \bullet c_{t-1} + i_{t} \bullet \tilde{c}_{t}\\
+h_{t} &=o_{t} \bullet \tanh(c_{t}), \qedhere
+\end{split},
+\end{align}
+
+Where $i_{t}$, $f_{t}$, $o_{t}$ are called input, forget and output gates, $\tilde{c}_{t}$ - candidate cell, $c_{t}$ - cell, and $h_{t}$ - hidden state. All aforementioned variables are $D_{h}$- dimensional. Parameter count of LSTM is 
+$4 \cdot D_{h} \cdot (D_{x}  + D_{h} + 1)$, and state is defined by $2 \cdot D_{h}$ variables.
+
+$c_{t}$ may be interpreted as internal memory of LSTM, while $h_{t}$ - represent its content, exposed by the output gate.  
+
+\subsubsection{GRU}
+Similar and simpler recurrent architecture, gated recurrent unit (GRU) \cite{Chung}, is defined by:
+
+\begin{align}
+\begin{split}
+\label{LSTM}
+u_{t} &=\sigma(W^{i}x_{t} + U^{i}h_{t-1} + b^{i})\\
+r_{t} &=\sigma(W^{f}x_{t} + U^{f}h_{t-1} + b^{f})\\
+\tilde{h}_{t} &= \tanh(W^{h}x_{t} + r_{t} \bullet (U^{h}h_{t-1}) + b^{h})\\
+h_{t} &= u_{t} \bullet \tilde{h}_{t} + (1 - u_{t}) \bullet h_{t-1}, \qedhere
+\end{split}
+\end{align}
+
+\noindent Reset gate $r_{t}$ controls integration of previous state $h_{t-1}$ into candidate state $\tilde{h}_{t}$, and update gate $u_{t}$ controls integration of candidate state into state update. GRU has $ 3 \cdot D_{h} \cdot (D_{x}  + D_{h} + 1) $ parameters and $D_{h}$-dimensional state variable.
+
+\subsection{Bilinear analogues of LSTM and GRU}
+
+This section describes bilinear LSTM and GRU RNN's. We assume that the inputs $X_{t}$ are $D_{x} \times D_{y}$ matrices. 
+
+\subsubsection{Bilinear LSTM} 
+
+\begin{align}
+\begin{split}
+I_{t} &=\sigma(W_{1}^{i}X_{t}W_{2}^{i} + U_{1}^{i}H_{t-1}U_{2}^{i}  +  B^{i})\\
+F_{t} &=\sigma(W_{1}^{f}X_{t}W_{2}^{f} + U_{1}^{f}H_{t-1}U_{2}^{f}  +  B^{f})\\
+O_{t} &=\sigma(W_{1}^{o}X_{t}W_{2}^{o} + U_{o}^{i}H_{t-1}U_{2}^{o}  +  B^{o})\\
+\tilde{C}_{t} &=\tanh(W_{1}^{c}X_{t}W_{2}^{c} + U_{1}^{c}H_{t-1}U_{2}^{c}  +  B^{c})\\
+C_{t} &= F_{t} \bullet C_{t-1} + I_{t} \bullet \tilde{C}_{t}\\
+H_{t} &= O_{t}\bullet \tanh(C_{t}),
+\end{split}.
+\end{align}
+
+\noindent where  $W_{1}^{i,f,o,c}: H_{x} \times D_{x}$, $W_{2}^{i,j,f,c}:  D_{y} \times H_{y}$, $H_{t}: H_{x} \times H_{y}$, $U_{1}: H_{x} \times H_{x}$, $U_{2}: H_{y} \times H_{y}$, and all remaining variables $H_{x} \times H_{y}$.
+
+\subsubsection{Bilinear GRU} 
+\begin{align}
+\begin{split}
+R_{t} &=\sigma(W_{1}^{i}X_{t}W_{2}^{i} + U_{1}^{i}H_{t-1}U_{2}^{i}  +  B^{i})\\
+U_{t} &=\sigma(W_{1}^{f}X_{t}W_{2}^{f} + U_{1}^{f}H_{t-1}U_{2}^{f}  +  B^{f})\\
+\tilde{H}_{t} &=\tanh(W_{1}^{c}X_{t}W_{2}^{c} + R_{T} \bullet (U_{1}^{c}H_{t-1}U_{2}^{c})  +  B^{c})\\
+H_{t} &= U_{t}\bullet \tilde{H}_{t} + (11^{T} - U_{t})\bullet H_{t-1},
+\end{split}.
+\end{align}
+
+\noindent 
+
+
+%\section{Computer experiments}
+
+
+
+
+
+
+\begin{thebibliography}{1}
+
+
+
+\bibitem{Andrychowicz} Andrychowicz, M.,  Denil, M., Gomez, S., Hoffman, M. W., Pfau, D., Schaul, T., and de Freitas N.  Learning to learn by gradient descent by gradient descent. CoRR, abs/1606.04474, 2016.
+
+\bibitem{Bengio} Bengio,  Y.,  Simard,  P.,  and  Frasconi, P. Learning long-term dependencies with gradient descent is difficult. Neural Networks, IEEE Transactions on, 5(2):157-166, 1994.
+
+\bibitem{Cheng} Cheng, Y., Yu, F. X., Feris, R.,S., Kumar, S., Choudhary, A., and Chang, S.  An exploration of parameter redundancy in deep networks with circulant projections. In
+ICCV, 2015.
+
+
+\bibitem{Chung} Chung, J., Gulcehre, C., Cho, K., and Bengio, Y. Empirical evaluation of gated recurrent neural networks on sequence modeling. NIPS Deep Learning Workshop, 2014.
+
+\bibitem{Daniusis} Daniusis, P., and Vaitkus, Pr. Neural network with matrix inputs. Informatica, 2008, vol.19 (4): 477-486.
+
+
+\bibitem{Elman} Elman, J. L. Finding structure in time.  CRL Technical Report 8801, Center for Research in Language, University
+of California, San Diego, 1988.
+
+\bibitem{Graves}  Graves, A., Wayne, G., Reynolds, M.,  Harley, T., Danihelka, I., Grabska-Barwi
+ nska, A., Colmenarejo, S.G., Grefenstette, E., Ramalho, T., Agapiou, J., et al. Hybrid computing using a neural network with dynamic external memory. Nature, 2016.
+
+
+
+\bibitem{Haykin} Haykin, S. Neural Networks: A Comprehensive Foundation. 2nd Edition. Prentice Hall, 1998.
+
+
+\bibitem{Henriques} Henriques,  J. F.,  Caseiro, R.,  Martins, P.,  and Batista, J.   Exploiting the Circulant Structure of Tracking-by-Detection with Kernels.   In ECCV, 2012.
+
+
+\bibitem{Hochreiter} Hochreiter, S.  and  Schmidhuber J. Long  Short-Term  Memory. Neural  Computation, 9(8): pp. 1735-1780, 1997.
+
+
+
+%\bibitem{Kingma} Kingma,  D.,  and  Ba,  J.
+%Adam:   A  Method  for Stochastic Optimization. arXiv:1412.6980 [cs.LG], December 2014.
+
+
+\bibitem{Oppenheim} Oppenheim,  A.  V.,  Schafer, R. W.,  Buck,  J. R. Discrete-time signal processing, volume 5.  Prentice Hall Upper Saddle River, 1999.
+
+\bibitem{Pedregosa} Pedregosa, F., Varoquaux, G.,  Gramfort, A.,  Michel, V., Thirion, B., Grisel, O., Blondel, M., Prettenhofer, P.,  Weiss, R., Dubourg, V.,  Vander-plas, J., Passos, A., Cournapeau, D., Brucher, M., Perrot, M., and Duchesnay, E. Scikit-learn: Machine Learning in Python, Journal of Machine Learning Research, vol. 12, pp. 2825-2830, 2011.
+
+
+\bibitem{Sak} Sak, H., Senior, A., Rao, K. and Beaufays, F. Fast and Accurate Recurrent Neural Network Acoustic Models for Speech Recognition. In INTERSPEECH, 2015.
+
+\bibitem{Schmidhuber}  Schmidhuber, J. Deep  learning  in  neural  networks:  An  overview. Neural  Networks,  61: 85-117, 2015.
+
+%\bibitem{Srivastava} Srivastava, N., Hinton, G.E., Krizhevsky, A., Sutskever, I., and Salakhutdinov, R.R. Dropout: A simple way to prevent neural networks from overfitting. The Journal of Machine Learning Research, 15(1):1929-1958, 2014.
+
+
+\bibitem{Sutskever} Sutskever, I., Vinyals, O., and Le, Q. V.. Sequence to sequence learning with neural networks, pp. NIPS 2014.
+
+
+\bibitem{Tensorflow}  Abadi M., Agarwal A., Barham P., Brevdo E., Chen Z., Citro C., Corrado G., Davis A., Dean J., Devin M., et al. TensorFlow: Large-Scale Machine Learning on Heterogeneous Distributed Systems. 2016. arXiv:1603.04467
+
+
+
+\bibitem{Tieleman} Tieleman, T., and Hinton, G.   Lecture 6.5-rmsprop:  Divide the gradient by a running average of its recent magnitude. COURSERA: Neural Networks for Machine Learning, 4, 2012.
+
+
+\bibitem{Vinyals} Vinyals, O., Bengio, S., Erhan, D. Show and tell: A neural image caption generator. In CVPR, 2015.
+
+
+
+
+\bibitem{Yu} Yu, F.,  Kumar, S., Gong, Y, and Chang, S.,-F.  Circulant binary embedding. In ICML, Beijing, China, 2014, pp. 946-954.
+
+\bibitem{Yu0}  Yu, F.  X.,  Kumar, S.,   Rowley, H.,  and  Chang, S.-F. Compact nonlinear maps and circulant extensions. ArXiv preprint arXiv:1503.03893, 2015.
+
+
+
+\bibitem{Zhang} Zhang, M., McCarthy, Z., Finn, C., Levine, S. and Abbeel, P. Learning deep neural network policies with continuous memory states, in IEEE International Conference on Robotics and Automation (ICRA), May 2016, pp. 520-527.
+
+
+
+
+\end{thebibliography}
+
+
+
+\end{document}

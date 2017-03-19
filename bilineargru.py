@@ -5,7 +5,11 @@ from helper import  *
 
 
 class BilinearGRU(tf.contrib.rnn.RNNCell):
-
+    '''
+	LSTM recurrent neural network with bilinear products.
+	Author: Povilas Daniusis, povilas.daniusis@gmail.com
+	https://github.com/povidanius/bilinear_rnn
+    '''
     def __init__(self, input_shape, hidden_shape):
         self._num_input_rows= input_shape[0]
         self._num_input_cols = input_shape[1]
