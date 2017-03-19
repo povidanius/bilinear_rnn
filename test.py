@@ -13,10 +13,10 @@ import tensorflow as tf
 from tensorflow.contrib import rnn
 
 
-from egrucell import *
-#from supercell import *
+#from egrucell import *
+from supercell import *
 from bilineargru import *
-#from multicelllstm1 import *
+#from multicelllstm import *
 
 
 
@@ -34,7 +34,7 @@ handle 28 sequences of 28 steps for every sample.
 
 # Parameters
 learning_rate = 0.001
-training_iters = 100000
+training_iters = 1000000
 batch_size = 128
 display_step = 10
 
@@ -76,12 +76,12 @@ def RNN(x, weights, biases):
     #lstm_cell = rnn.GRUCell(n_hidden)
 
     #lstm_cell = rnn.LayerNormBasicLSTMCell(n_hidden)
-    lstm_cell = EGRUCell(n_hidden)
+    #lstm_cell = EGRUCell(n_hidden)
     #lstm_cell = LSTMCell(n_hidden)
     #lstm_cell = HyperLSTMCell(n_hidden)
-    #lstm_cell = BilinearGRU([7,4],[4, 32])
+    lstm_cell = BilinearGRU(input_shape = [7,4], hidden_shape = [32, 4])
     #lstm_cell = MultiCellLSTM(n_hidden, 2)
-
+    #lstm_cell = HyperLSTMCell(n_hidden)
 	
     # Get lstm cell output
     outputs, states = tf.contrib.rnn.static_rnn(lstm_cell, x, dtype=tf.float32)
@@ -91,18 +91,16 @@ def RNN(x, weights, biases):
 
 pred = RNN(x, weights, biases)
 
-# Define loss and optimizer
+
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=y))
 optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 
-# Evaluate model
 correct_pred = tf.equal(tf.argmax(pred,1), tf.argmax(y,1))
 accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
-# Initializing the variables
 init = tf.global_variables_initializer()
 
-# Launch the graph
+
 with tf.Session() as sess:
     sess.run(init)
     step = 1
@@ -130,3 +128,32 @@ with tf.Session() as sess:
     test_label = mnist.test.labels[:test_len]
     print("Testing Accuracy:", \
         sess.run(accuracy, feed_dict={x: test_data, y: test_label}))
+
+
+
+# --------- testing of update step -------------
+
+"""
+sess = tf.InteractiveSession()
+sess.run(tf.global_variables_initializer())
+
+NB = 100
+DX1 = 7
+DX2 = 4
+DH1 = 32
+DH2 = 7
+NGATES = 4
+X = tf.Variable(tf.random_normal([NB,DX1,DX2]))
+W1 = tf.Variable(tf.random_normal([DH1, DX1]))
+W2 = tf.Variable(tf.random_normal([DX2, DH2]))
+
+W1X = dot(W1,X)
+print("W1X shape {}".format(W1X.get_shape()))
+"""
+
+
+#W1XW2 = dot(tf.transpose(dot(W1, X), [1, 0, 2]), W2)
+#print("W1XW2 shape {}".format(W1XW2.get_shape()))
+
+
+

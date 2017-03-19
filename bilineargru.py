@@ -36,74 +36,52 @@ class BilinearGRU(tf.contrib.rnn.RNNCell):
 
 
                     W1u = tf.get_variable("W1u",
-                        shape=[self._num_hidden_rows, self._num_input_rows],
-                        initializer=tf.truncated_normal_initializer())
+                        shape=[self._num_hidden_rows, self._num_input_rows])
 
                     W2u = tf.get_variable("W2u",
-                        shape=[self._num_input_cols, self._num_hidden_cols],
-                        initializer=tf.truncated_normal_initializer())
+                        shape=[self._num_input_cols, self._num_hidden_cols])
 
 
                     W1r = tf.get_variable("W1r",
-                        shape=[self._num_hidden_rows, self._num_input_rows],
-                        initializer=tf.truncated_normal_initializer())
+                        shape=[self._num_hidden_rows, self._num_input_rows])
 
                     W2r = tf.get_variable("W2r",
-                        shape=[self._num_input_cols, self._num_hidden_cols],
-                        initializer=tf.truncated_normal_initializer())
+                        shape=[self._num_input_cols, self._num_hidden_cols])
 
 
                     W1h = tf.get_variable("W1h",
-                        shape=[self._num_hidden_rows, self._num_input_rows],
-                        initializer=tf.truncated_normal_initializer())
+                        shape=[self._num_hidden_rows, self._num_input_rows])
 
                     W2h = tf.get_variable("W2h",
-                        shape=[self._num_input_cols, self._num_hidden_cols],
-                        initializer=tf.truncated_normal_initializer())
+                        shape=[self._num_input_cols, self._num_hidden_cols])
 
 
                     U1u = tf.get_variable("U1u",
-                        shape=[self._num_hidden_rows, self._num_hidden_rows],
-                        initializer=tf.truncated_normal_initializer())
+                        shape=[self._num_hidden_rows, self._num_hidden_rows])
 
                     U2u = tf.get_variable("U2u",
-                        shape=[self._num_hidden_cols, self._num_hidden_cols],
-                        initializer=tf.truncated_normal_initializer())
+                        shape=[self._num_hidden_cols, self._num_hidden_cols])
 
                     U1r = tf.get_variable("U1r",
-                        shape=[self._num_hidden_rows, self._num_hidden_rows],
-                        initializer=tf.truncated_normal_initializer())
+                        shape=[self._num_hidden_rows, self._num_hidden_rows])
 
                     U2r = tf.get_variable("U2r",
-                        shape=[self._num_hidden_cols, self._num_hidden_cols],
-                        initializer=tf.truncated_normal_initializer())
+                        shape=[self._num_hidden_cols, self._num_hidden_cols])
 
                     U1h = tf.get_variable("U1h",
-                        shape=[self._num_hidden_rows, self._num_hidden_rows],
-                        initializer=tf.truncated_normal_initializer())
+                        shape=[self._num_hidden_rows, self._num_hidden_rows])
 
                     U2h = tf.get_variable("U2h",
-                        shape=[self._num_hidden_cols, self._num_hidden_cols],
-                        initializer=tf.truncated_normal_initializer())
+                        shape=[self._num_hidden_cols, self._num_hidden_cols])
 
                     Bu = tf.get_variable("Bu",
-                        shape=[self._num_hidden_rows, self._num_hidden_cols],
-                        initializer=tf.truncated_normal_initializer())
+                        shape=[self._num_hidden_rows, self._num_hidden_cols])
 
                     Br = tf.get_variable("Br",
-                        shape=[self._num_hidden_rows, self._num_hidden_cols],
-                        initializer=tf.truncated_normal_initializer())
+                        shape=[self._num_hidden_rows, self._num_hidden_cols])
 
                     Bh = tf.get_variable("Bh",
-                        shape=[self._num_hidden_rows, self._num_hidden_cols],
-                        initializer=tf.truncated_normal_initializer())
-
-
-                    # -----------------------
-		    #print("X shape {}".format(X.get_shape()))
-		    #print("W1u shape {}".format(W1u.get_shape()))
-		    #print("U1 shape {}".format(U1h
-		    #print("H shape {}".format(H.get_shape()))
+                        shape=[self._num_hidden_rows, self._num_hidden_cols])
 
 
                     U = tf.nn.sigmoid( dot(tf.transpose(dot(W1u, X), [1, 0, 2]), W2u) + dot(tf.transpose(dot(U1u, H), [1, 0, 2]), U2u) + Bu)
@@ -114,32 +92,6 @@ class BilinearGRU(tf.contrib.rnn.RNNCell):
                     new_state = tf.reshape(H_new, [-1, self._num_hidden_rows*self._num_hidden_cols])
 
         return new_state, new_state
-
-
-# --------- testing of update step -------------
-
-"""
-sess = tf.InteractiveSession()
-sess.run(tf.global_variables_initializer())
-
-NB = 100
-DX1 = 7
-DX2 = 4
-DH1 = 32
-DH2 = 7
-NGATES = 4
-X = tf.Variable(tf.random_normal([NB,DX1,DX2]))
-W1 = tf.Variable(tf.random_normal([DH1, DX1]))
-W2 = tf.Variable(tf.random_normal([DX2, DH2]))
-
-W1X = dot(W1,X)
-print("W1X shape {}".format(W1X.get_shape()))
-"""
-
-
-#W1XW2 = dot(tf.transpose(dot(W1, X), [1, 0, 2]), W2)
-#print("W1XW2 shape {}".format(W1XW2.get_shape()))
-
 
 
 
