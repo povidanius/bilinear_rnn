@@ -123,11 +123,15 @@
 \maketitle
 \section{Introduction}
 
-In this article we aim to use bilinear products for deriving new modification of long short-term memory (LSTM) \cite{Hochreiter} and gated 
-recurrent unit (GRU) \cite{Chung} recurrent neural networks.
+Many sequence learning problems are efficiently solved by recurrent neural networks (RNN's) (e.g. metalearning \cite{Andrychowicz}, speech recognition \cite{Sak}, machine translation \cite{Sutskever}, image caption generation \cite{Vinyals}). RNN's encode a sequence of inputs into the internal state, which is further used to infer a sequence of corresponding outputs. 
 
-We will start our analysis with formulation of conventional LSTM and GRU, following by the description of 
-suggested bilinear analogues, and presentation of the results of conducted computer experiments.
+Although from theoretical point of view RNN's are capable of arbitrary computations \cite{Siegelmann}, in practice training of RNN is often time consuming process, and therefore new, more efficient architectures are needed.
+
+
+In this article we use bilinear products for deriving new modification of long short-term memory (LSTM) \cite{Hochreiter} and gated recurrent unit (GRU) \cite{Chung} recurrent neural networks.
+
+%We will start our analysis with formulations of conventional RNN, following by the description of 
+%suggested bilinear analogues, and presentation of the results of conducted computer experiments.
 
 Tensorflow \cite{Tensorflow} implementation of suggested bilinear LSTM/GRU networks can be 
 downloaded from \url{https://github.com/povidanius/bilinear_rnn}.
@@ -135,9 +139,11 @@ downloaded from \url{https://github.com/povidanius/bilinear_rnn}.
 
 
 
-\subsection{Conventional LSTM and GRU}
+\subsection{RNN models}
 
-Let $x_{t} \in \mathbb{R}^{D_{x}}$ be input vectors. By $\bullet$ we denote element-wise multiplication. 
+Let $x_{t} \in \mathbb{R}^{D_{x}}$ be input vectors. Simple RNN (SRNN) model is defined by recurrence $h_{t} = \phi(Wx_{t} + Uh_{t-1} + b)$, where $h_{t}$ is hidden state vector, $W$ and $U$ are parameter matrices, $b$ is bias vector, and $\phi$ - activation function \cite{Elman}. Receiving the sequence of inputs $x_{t}$, the model maintains hidden state $h_{t}$, and outputs $y_{t} = \psi(Vh_{t} + c)$, where $V$ and $c$ are parameters, and $\psi$ is output activation function.
+
+By $\bullet$ we denote element-wise multiplication. 
 
 \subsubsection{LSTM}
 
@@ -178,6 +184,7 @@ h_{t} &= u_{t} \bullet \tilde{h}_{t} + (1 - u_{t}) \bullet h_{t-1}, \qedhere
 
 This section describes bilinear LSTM and GRU RNN's. We assume that the inputs $X_{t}$ are $D_{x} \times D_{y}$ matrices. 
 
+
 \subsubsection{Bilinear LSTM} 
 
 \begin{align}
@@ -206,7 +213,7 @@ H_{t} &= U_{t}\bullet \tilde{H}_{t} + (11^{T} - U_{t})\bullet H_{t-1},
 \noindent 
 
 
-%\section{Computer experiments}
+\section{Computer experiments}
 
 
 
@@ -262,6 +269,12 @@ of California, San Diego, 1988.
 \bibitem{Schmidhuber}  Schmidhuber, J. Deep  learning  in  neural  networks:  An  overview. Neural  Networks,  61: 85-117, 2015.
 
 %\bibitem{Srivastava} Srivastava, N., Hinton, G.E., Krizhevsky, A., Sutskever, I., and Salakhutdinov, R.R. Dropout: A simple way to prevent neural networks from overfitting. The Journal of Machine Learning Research, 15(1):1929-1958, 2014.
+
+\bibitem{Siegelmann} Siegelmann, H. T., and Sontag, E. D.  On
+the  computational  power  of  neural  nets.
+Journal of Computer and System Sciences, 50, 1995.
+
+
 
 
 \bibitem{Sutskever} Sutskever, I., Vinyals, O., and Le, Q. V.. Sequence to sequence learning with neural networks, pp. NIPS 2014.

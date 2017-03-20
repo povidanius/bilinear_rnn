@@ -14,8 +14,8 @@ from tensorflow.contrib import rnn
 
 
 #from egrucell import *
-from supercell import *
-from bilineargru import *
+#from supercell import *
+from bilinear_rnn import *
 #from multicelllstm import *
 
 
@@ -79,7 +79,7 @@ def RNN(x, weights, biases):
     #lstm_cell = EGRUCell(n_hidden)
     #lstm_cell = LSTMCell(n_hidden)
     #lstm_cell = HyperLSTMCell(n_hidden)
-    lstm_cell = BilinearGRU(input_shape = [7,4], hidden_shape = [32, 4])
+    lstm_cell = BilinearSRNN(input_shape = [7,4], hidden_shape = [32, 4])
     #lstm_cell = MultiCellLSTM(n_hidden, 2)
     #lstm_cell = HyperLSTMCell(n_hidden)
 	
