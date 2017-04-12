@@ -26,7 +26,7 @@
 \usepackage{empheq}
 \usepackage{booktabs}
 \usepackage{authblk}
-
+\usepackage{cals}
 %\usepackage{3dplot} %requires 3dplot.sty to be in same directory, or in your LaTeX installation
 %\usepackage{amsmath,amsfonts,amssymb,amsthm,epsfig,epstopdf,titling,url,array}
 \usepackage{xstring}
@@ -36,6 +36,19 @@
 %\newtheorem{conj}{Conjecture}[section]
 %\newtheorem{exmp}{Example}[section]
 \makeatletter
+
+\renewcommand\cals@issue@row{%
+\nointerlineskip
+\setbox0=\vtop{\hbox to \textwidth{\hskip\leftskip \box\cals@current@cs \hskip\rightskip}}%
+  \ht0=0pt \box0
+\nointerlineskip
+\hbox to \textwidth{\hskip\leftskip\hbox{\cals@issue@rowsep}\hskip\rightskip}%
+\nointerlineskip
+\hbox to \textwidth{\hskip\leftskip \box\cals@current@row \hskip\rightskip}%
+\let\cals@last@rs@below=\cals@current@rs@below
+\let\cals@last@context=\cals@current@context}
+
+
 \newcommand{\change@uppercase@math}{%
   \count@=`\A
   \loop
@@ -123,29 +136,42 @@
 \maketitle
 \section{Introduction}
 
-Many sequence learning problems are efficiently solved by recurrent neural networks (RNN's) (e.g. metalearning \cite{Andrychowicz}, speech recognition \cite{Sak}, machine translation \cite{Sutskever}, image caption generation \cite{Vinyals}). RNN's encode a sequence of inputs into the internal state, which is further used to infer a sequence of corresponding outputs. 
-
-Although from theoretical point of view RNN's are capable of arbitrary computations \cite{Siegelmann}, in practice training of RNN is often time consuming process, and therefore new, more efficient architectures are needed.
-
-
-In this article we use bilinear products for deriving new modification of long short-term memory (LSTM) \cite{Hochreiter} and gated recurrent unit (GRU) \cite{Chung} recurrent neural networks.
-
-%We will start our analysis with formulations of conventional RNN, following by the description of 
-%suggested bilinear analogues, and presentation of the results of conducted computer experiments.
-
-Tensorflow \cite{Tensorflow} implementation of suggested bilinear LSTM/GRU networks can be 
-downloaded from \url{https://github.com/povidanius/bilinear_rnn}.
+Many sequence learning problems are efficiently solved by recurrent neural networks (RNN's) (e.g. speech recognition \cite{Sak}, machine translation \cite{Sutskever}, image caption generation \cite{Vinyals}). RNN's encode a sequence of inputs into the fixed structure internal state, which is further used to infer a sequence of corresponding outputs. 
 
 
 
+Although from theoretical point of view RNN's are capable of performing arbitrary computations \cite{Siegelmann}, in practice training of RNN's is often non-trivial and time consuming process, and therefore new, more efficient architectures and training methods are needed.
 
-\subsection{RNN models}
+This study is devoted to the question of how RNN's can benefit from bilinear products.
 
-Let $x_{t} \in \mathbb{R}^{D_{x}}$ be input vectors. Simple RNN (SRNN) model is defined by recurrence $h_{t} = \phi(Wx_{t} + Uh_{t-1} + b)$, where $h_{t}$ is hidden state vector, $W$ and $U$ are parameter matrices, $b$ is bias vector, and $\phi$ - activation function \cite{Elman}. Receiving the sequence of inputs $x_{t}$, the model maintains hidden state $h_{t}$, and outputs $y_{t} = \psi(Vh_{t} + c)$, where $V$ and $c$ are parameters, and $\psi$ is output activation function.
+Although the inner product representation plays fundamental role  in many machine learning algorithms, they often can benefit from bilinear products as well. For example, bilinear hashing \cite{Gong}, feed forward neural nets \cite{Daniusis}, SVM's \cite{Cai} can be more efficient than the conventional analogues. 
 
-By $\bullet$ we denote element-wise multiplication. 
+
+This article contributes to RNN's by applying bilinear products to derive new modification of long short-term memory (LSTM) \cite{Hochreiter} and gated recurrent unit (GRU) \cite{Chung} recurrent neural networks, and conducting an empirical analysis of suggested models. LSTM and GRU were chosen because of their effectiveness.
+
+Main advantages of our approach is that it can be used directly for matrix-valued sequences, is able to capture the structure of such a data more efficiently comparing to conventional analogues, and contains less parameters. Tensorflow \cite{Tensorflow} implementation of suggested bilinear RNN's can be downloaded from \url{https://github.com/povidanius/bilinear_rnn}.
+
+
+
+
+\subsection{Short review of RNN models}
+Let $t$ be discrete time variable, and let $x_{t} \in \mathbb{R}^{D_{x}}$ be corresponding input vectors. Simple RNN (SRNN) model is defined by 
+recurrence $h_{t} = \phi(Wx_{t} + Uh_{t-1} + b)$, where $h_{t}$ is hidden state vector, 
+$W$ and $U$ are parameter matrices, $b$ is bias vector, and $\phi$ - activation function \cite{Elman}. 
+Receiving the sequence of inputs $x_{t}$, the model maintains hidden state $h_{t}$, and 
+outputs $y_{t} = \psi(Vh_{t} + c)$, where $V$ and $c$ are another parameters, and $\psi$ is output activation function. Although SRNN is able to learn non-trivial sequential regularities, in practice it is rather limited. 
+
 
 \subsubsection{LSTM}
+
+
+LSTM \cite{Hochreiter} relies on the combination of two innovations: gate mechanism and additive state update mechanism.
+
+Upon receiving new input $x_{t}$ the LSTM combines it with hidden state into new candidate memory vector.
+
+The input gate controls an integration of this new information into cell's memory, allowing to 
+inhibit certain components of candidate cell. Similarly, the forget gate controls integration or previous memory, 
+and output gate determines exposition weights of $c_{t}$.
 
 An update of LSTM state $(c_{t}, h_{t})^{T}$ is defined by:
 \begin{align}
@@ -160,10 +186,14 @@ h_{t} &=o_{t} \bullet \tanh(c_{t}), \qedhere
 \end{split},
 \end{align}
 
-Where $i_{t}$, $f_{t}$, $o_{t}$ are called input, forget and output gates, $\tilde{c}_{t}$ - candidate cell, $c_{t}$ - cell, and $h_{t}$ - hidden state. All aforementioned variables are $D_{h}$- dimensional. Parameter count of LSTM is 
+Where $\bullet$ denotes element-wise multiplication, $i_{t}$, $f_{t}$, $o_{t}$ are called input, forget and 
+output gates, $\tilde{c}_{t}$ - candidate cell memory, $c_{t}$ - cell memory, and $h_{t}$ - hidden state. 
+All aforementioned variables are $D_{h}$- dimensional. Parameter count of LSTM is 
 $4 \cdot D_{h} \cdot (D_{x}  + D_{h} + 1)$, and state is defined by $2 \cdot D_{h}$ variables.
 
-$c_{t}$ may be interpreted as internal memory of LSTM, while $h_{t}$ - represent its content, exposed by the output gate.  
+The intuition behind LSTM
+$c_{t}$ may be interpreted as internal memory of LSTM, while $h_{t}$ - represent its content, 
+exposed by the output gate.
 
 \subsubsection{GRU}
 Similar and simpler recurrent architecture, gated recurrent unit (GRU) \cite{Chung}, is defined by:
@@ -173,20 +203,24 @@ Similar and simpler recurrent architecture, gated recurrent unit (GRU) \cite{Chu
 \label{LSTM}
 u_{t} &=\sigma(W^{i}x_{t} + U^{i}h_{t-1} + b^{i})\\
 r_{t} &=\sigma(W^{f}x_{t} + U^{f}h_{t-1} + b^{f})\\
-\tilde{h}_{t} &= \tanh(W^{h}x_{t} + r_{t} \bullet (U^{h}h_{t-1}) + b^{h})\\
+\tilde{h}_{t} &= th(W^{h}x_{t} + r_{t} \bullet (U^{h}h_{t-1}) + b^{h})\\
 h_{t} &= u_{t} \bullet \tilde{h}_{t} + (1 - u_{t}) \bullet h_{t-1}, \qedhere
 \end{split}
 \end{align}
 
 \noindent Reset gate $r_{t}$ controls integration of previous state $h_{t-1}$ into candidate state $\tilde{h}_{t}$, and update gate $u_{t}$ controls integration of candidate state into state update. GRU has $ 3 \cdot D_{h} \cdot (D_{x}  + D_{h} + 1) $ parameters and $D_{h}$-dimensional state variable.
 
+
+
+
 \subsection{Bilinear analogues of LSTM and GRU}
 
-This section describes bilinear LSTM and GRU RNN's. We assume that the inputs $X_{t}$ are $D_{x} \times D_{y}$ matrices. 
+
+This section describes bilinear LSTM and GRU RNN's. We assume that the inputs $X_{t}$ are $D_{X}^{1} \times D_{X}^{2}$ matrices, and hidden state variables are $D_{H}^{1} \times D_{H}^{2}$ matrices. Bilinear SRNN can now be reformulated as:
+$H_{t} = \phi(W_{1}X_{t}W_{2} + U_{1}H_{t-1}U_{2} + B)$, where $\phi$ is non-linear activation function, and parameter matrices of appropriate dimensions.
 
 
-\subsubsection{Bilinear LSTM} 
-
+\subsubsection{Bilinear LSTM (BLSTM)} 
 \begin{align}
 \begin{split}
 I_{t} &=\sigma(W_{1}^{i}X_{t}W_{2}^{i} + U_{1}^{i}H_{t-1}U_{2}^{i}  +  B^{i})\\
@@ -198,22 +232,31 @@ H_{t} &= O_{t}\bullet \tanh(C_{t}),
 \end{split}.
 \end{align}
 
-\noindent where  $W_{1}^{i,f,o,c}: H_{x} \times D_{x}$, $W_{2}^{i,j,f,c}:  D_{y} \times H_{y}$, $H_{t}: H_{x} \times H_{y}$, $U_{1}: H_{x} \times H_{x}$, $U_{2}: H_{y} \times H_{y}$, and all remaining variables $H_{x} \times H_{y}$.
 
-\subsubsection{Bilinear GRU} 
+
+\subsubsection{Bilinear GRU (BGRU)} 
 \begin{align}
-\begin{split}
+\begin{split}\nonumber
 R_{t} &=\sigma(W_{1}^{i}X_{t}W_{2}^{i} + U_{1}^{i}H_{t-1}U_{2}^{i}  +  B^{i})\\
 U_{t} &=\sigma(W_{1}^{f}X_{t}W_{2}^{f} + U_{1}^{f}H_{t-1}U_{2}^{f}  +  B^{f})\\
-\tilde{H}_{t} &=\tanh(W_{1}^{c}X_{t}W_{2}^{c} + R_{T} \bullet (U_{1}^{c}H_{t-1}U_{2}^{c})  +  B^{c})\\
+\tilde{H}_{t} &= th(W_{1}^{c}X_{t}W_{2}^{c} + R_{T} \bullet (U_{1}^{c}H_{t-1}U_{2}^{c})  +  B^{c})\\
 H_{t} &= U_{t}\bullet \tilde{H}_{t} + (11^{T} - U_{t})\bullet H_{t-1},
 \end{split}.
 \end{align}
 
-\noindent 
+\subsubsection{Analysis}
+
+The dimension of parameter spaces of BSRNN is $|\theta|_{BSRNN} = D_{H}^{1} (D_{X}^{1} + D_{H}^{1} + D_{H}^{2}) + D_{H}^{2} (D_{X}^{2} + D_{H}^{2})
+$, and its state is represented by $D_{H}^{1} D_{H}^{2}$ variables. BLSTM/BGRU contains $4|\theta|_{BSRNN}$ and $3|\theta|_{BGRU}$ parameters respectively.
 
 
 \section{Computer experiments}
+
+\subsection{Meta-learning of RNN}
+
+We represent parameters of LSTM by $4D_{h} \times (D_{x} + D_{h} + 1)$ matrix.
+
+
 
 
 
@@ -227,6 +270,9 @@ H_{t} &= U_{t}\bullet \tilde{H}_{t} + (11^{T} - U_{t})\bullet H_{t-1},
 \bibitem{Andrychowicz} Andrychowicz, M.,  Denil, M., Gomez, S., Hoffman, M. W., Pfau, D., Schaul, T., and de Freitas N.  Learning to learn by gradient descent by gradient descent. CoRR, abs/1606.04474, 2016.
 
 \bibitem{Bengio} Bengio,  Y.,  Simard,  P.,  and  Frasconi, P. Learning long-term dependencies with gradient descent is difficult. Neural Networks, IEEE Transactions on, 5(2):157-166, 1994.
+
+
+\bibitem{Cai} Cai, D., He, X., Han, J. Learning with Tensor Representation, preprint, 2006.
 
 \bibitem{Cheng} Cheng, Y., Yu, F. X., Feris, R.,S., Kumar, S., Choudhary, A., and Chang, S.  An exploration of parameter redundancy in deep networks with circulant projections. In
 ICCV, 2015.
@@ -242,6 +288,10 @@ of California, San Diego, 1988.
 
 \bibitem{Graves}  Graves, A., Wayne, G., Reynolds, M.,  Harley, T., Danihelka, I., Grabska-Barwi
  nska, A., Colmenarejo, S.G., Grefenstette, E., Ramalho, T., Agapiou, J., et al. Hybrid computing using a neural network with dynamic external memory. Nature, 2016.
+ 
+
+
+\bibitem{Gong}  Gong, Y., Kumar, S., Rowley, H. A., and Lazebnik, S. Learning binary codes for high-dimensional data using bilinear projections. CVPR, pages 484-491, 2013.
 
 
 
