@@ -122,8 +122,8 @@ with tf.Session() as sess:
         step += 1
     print("Optimization Finished!")
 
-    # Calculate accuracy for 128 mnist test images
-    test_len = 128
+
+    test_len = 1024
     test_data = mnist.test.images[:test_len].reshape((-1, n_steps, n_input))
     test_label = mnist.test.labels[:test_len]
     print("Testing Accuracy:", \
