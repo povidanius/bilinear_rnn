@@ -7,6 +7,8 @@ from helper import  *
 	Recurrent neural networks with bilinear products.
 	Author: Povilas Daniusis, povilas.daniusis@gmail.com, 2017.
 	https://github.com/povidanius/bilinear_rnn
+
+	TODO: add dropout, normalization, initial state learning, and better initialization.
 '''
 
 

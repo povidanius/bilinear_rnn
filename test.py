@@ -7,12 +7,20 @@ Author: Aymeric Damien
 Project: https://github.com/aymericdamien/TensorFlow-Examples/
 '''
 
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
 from tensorflow.contrib import rnn
 
+import matplotlib
+#%matplotlib inline
+import matplotlib.pyplot as plt
 
+
+import cv2, requests, numpy
+import time
 #from egrucell import *
 #from supercell import *
 from bilinear_rnn import *
@@ -20,8 +28,39 @@ from bilinear_rnn import *
 
 
 
+import tensorflow as tf
+
+from tensorflow.python.ops import control_flow_ops
+from datasets import dataset_factory
+from deployment import model_deploy
+from nets import nets_factory
+from preprocessing import preprocessing_factory
+
+slim = tf.contrib.slim
+
+
+
+
+slim = tf.contrib.slim
+
+from slim.datasets import download_and_convert_cifar10
+
 # Import MNIST data
 from tensorflow.examples.tutorials.mnist import input_data
+
+
+def my_cnn(images, num_classes, is_training):  # is_training is not used...
+    with slim.arg_scope([slim.max_pool2d], kernel_size=[3, 3], stride=2):
+        net = slim.conv2d(images, 64, [5, 5])
+        net = slim.max_pool2d(net)
+        net = slim.conv2d(net, 64, [5, 5])
+        net = slim.max_pool2d(net)
+        net = slim.flatten(net)
+        net = slim.fully_connected(net, 192)
+        net = slim.fully_connected(net, num_classes, activation_fn=None)       
+        return net
+
+
 
 
 mnist = input_data.read_data_sets("data", one_hot=True)
@@ -59,6 +98,9 @@ biases = {
 
 def RNN(x, weights, biases):
 
+    rnn_cell = BilinearLSTM(input_shape = [7,4], hidden_shape = [32, 4])
+
+
     # Prepare data shape to match `rnn` function requirements
     # Current data input shape: (batch_size, n_steps, n_input)
     # Required shape: 'n_steps' tensors list of shape (batch_size, n_input)
@@ -70,21 +112,16 @@ def RNN(x, weights, biases):
     # Split to get a list of 'n_steps' tensors of shape (batch_size, n_input)
     x = tf.split(x, n_steps, 0)
 
-    # Define a lstm cell with tensorflow
-    #lstm_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
+    
+    #print (len(x))
+   
 
-    #lstm_cell = rnn.GRUCell(n_hidden)
+    outputs, states = tf.contrib.rnn.static_rnn(rnn_cell, x, dtype=tf.float32)
+   
+    print (len(outputs))
+    print(outputs[-1].get_shape())
+    #print(states.get_shape())
 
-    #lstm_cell = rnn.LayerNormBasicLSTMCell(n_hidden)
-    #lstm_cell = EGRUCell(n_hidden)
-    #lstm_cell = LSTMCell(n_hidden)
-    #lstm_cell = HyperLSTMCell(n_hidden)
-    lstm_cell = BilinearSRNN(input_shape = [7,4], hidden_shape = [32, 4])
-    #lstm_cell = MultiCellLSTM(n_hidden, 2)
-    #lstm_cell = HyperLSTMCell(n_hidden)
-	
-    # Get lstm cell output
-    outputs, states = tf.contrib.rnn.static_rnn(lstm_cell, x, dtype=tf.float32)
 
     # Linear activation, using rnn inner loop last output
     return tf.matmul(outputs[-1], weights['out']) + biases['out']

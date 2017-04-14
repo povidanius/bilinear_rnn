@@ -149,7 +149,7 @@ Although the inner product representation plays fundamental role  in many machin
 
 This article contributes to RNN's by applying bilinear products to derive new modification of long short-term memory (LSTM) \cite{Hochreiter} and gated recurrent unit (GRU) \cite{Chung} recurrent neural networks, and conducting an empirical analysis of suggested models. LSTM and GRU were chosen because of their effectiveness.
 
-Main advantages of our approach is that it can be used directly for matrix-valued sequences, is able to capture the structure of such a data more efficiently comparing to conventional analogues, and contains less parameters. Tensorflow \cite{Tensorflow} implementation of suggested bilinear RNN's can be downloaded from \url{https://github.com/povidanius/bilinear_rnn}.
+Main advantages of our approach are that it can be used directly for matrix-valued sequences, is able to capture the structure of such a data more efficiently comparing to conventional analogues, and contains less parameters. Tensorflow \cite{Tensorflow} implementation of suggested bilinear RNN's can be downloaded from \url{https://github.com/povidanius/bilinear_rnn}.
 
 
 
@@ -217,7 +217,9 @@ h_{t} &= u_{t} \bullet \tilde{h}_{t} + (1 - u_{t}) \bullet h_{t-1}, \qedhere
 
 
 This section describes bilinear LSTM and GRU RNN's. We assume that the inputs $X_{t}$ are $D_{X}^{1} \times D_{X}^{2}$ matrices, and hidden state variables are $D_{H}^{1} \times D_{H}^{2}$ matrices. Bilinear SRNN can now be reformulated as:
-$H_{t} = \phi(W_{1}X_{t}W_{2} + U_{1}H_{t-1}U_{2} + B)$, where $\phi$ is non-linear activation function, and parameter matrices of appropriate dimensions.
+$H_{t} = \phi(W_{1}X_{t}W_{2} + U_{1}H_{t-1}U_{2} + B)$, where $\phi$ is non-linear activation function, and parameter matrices of appropriate dimensions. 
+
+We expect that such an approach allows to capture linear row and column structures of the data, and is more compact in terms of parameters (see  Table~\ref{table:parameters_and_states}).
 
 
 \subsubsection{Bilinear LSTM (BLSTM)} 
@@ -244,17 +246,38 @@ H_{t} &= U_{t}\bullet \tilde{H}_{t} + (11^{T} - U_{t})\bullet H_{t-1},
 \end{split}.
 \end{align}
 
-\subsubsection{Analysis}
+%\subsubsection{Analysis}
 
-The dimension of parameter spaces of BSRNN is $|\theta|_{BSRNN} = D_{H}^{1} (D_{X}^{1} + D_{H}^{1} + D_{H}^{2}) + D_{H}^{2} (D_{X}^{2} + D_{H}^{2})
-$, and its state is represented by $D_{H}^{1} D_{H}^{2}$ variables. BLSTM/BGRU contains $4|\theta|_{BSRNN}$ and $3|\theta|_{BGRU}$ parameters respectively.
+\begin{table}
+\begin{tabular}{ |l|l|l| }
+  \hline
+   Method & Parameter dimension & State dimension \\
+  \hline   
+   LSTM & $ 4 \cdot D_{h} \cdot (D_{x}  + D_{h} + 1)$  & $2D_{h}$ \\
+  \hline   
+   BLSTM & 	$4 \dot ( D_{H}^{1} (D_{X}^{1} + D_{H}^{1} + D_{H}^{2}) + D_{H}^{2} (D_{X}^{2} + D_{H}^{2}))$ & $2 D_{H}^{1} D_{H}^{2}$\\
+  \hline   
+   GRU & $ 3 \cdot D_{h} \cdot (D_{x}  + D_{h} + 1) $ & $D_{h}$ \\      
+  \hline   
+   BGRU & 	$3 \dot ( D_{H}^{1} (D_{X}^{1} + D_{H}^{1} + D_{H}^{2}) + D_{H}^{2} (D_{X}^{2} + D_{H}^{2}))$ & $ D_{H}^{1} D_{H}^{2}$\\
+  \hline
+\end{tabular}
+  \caption{Parameter and state space dimensionalities}
+\label{table:parameters_and_states}
+\end{table}
+
+
 
 
 \section{Computer experiments}
 
+This section is devoted to computer experiments of suggested bilinear RNN's.
+
+\subsection{Meta-learning of regularizer}
+
 \subsection{Meta-learning of RNN}
 
-We represent parameters of LSTM by $4D_{h} \times (D_{x} + D_{h} + 1)$ matrix.
+In this experiment we follow scheme described in \cite{Andrychowicz} and try to learn parameters of conventional LSTM using BLSTM.
 
 
 
