@@ -136,15 +136,20 @@
 \maketitle
 \section{Introduction}
 
-Many sequence learning problems are efficiently solved by recurrent neural networks (RNN's) (e.g. speech recognition \cite{Sak}, machine translation \cite{Sutskever}, image caption generation \cite{Vinyals}). RNN's encode a sequence of inputs into the fixed structure internal state, which is further used to infer a sequence of corresponding outputs. 
+Many sequence learning problems are efficiently solved by recurrent neural networks (RNN's) (e.g. speech recognition \cite{Sak}, machine translation \cite{Sutskever}, image caption generation \cite{Vinyals}). RNN's encode a sequence of inputs into state variable of fixed structure, which is further used to infer a sequence of corresponding outputs. 
 
 
 
-Although from theoretical point of view RNN's are capable of performing arbitrary computations \cite{Siegelmann}, in practice training of RNN's is often non-trivial and time consuming process, and therefore new, more efficient architectures and training methods are needed.
+Although theoretically RNN's are capable of performing arbitrary computations \cite{Siegelmann}, in practice training of RNN's is often non-trivial and time consuming process, and therefore new, more efficient architectures and training methods are needed.
 
-This study is devoted to the question of how RNN's can benefit from bilinear products.
 
-Although the inner product representation plays fundamental role  in many machine learning algorithms, they often can benefit from bilinear products as well. For example, bilinear hashing \cite{Gong}, feed forward neural nets \cite{Daniusis}, SVM's \cite{Cai} can be more efficient than the conventional analogues. 
+
+
+%For example, bilinear hashing \cite{Gong}, feed forward neural nets \cite{Daniusis}, SVM's \cite{Cai} in certain cases can be more efficient than conventional analogues.
+%Linear projections plays fundamental role in many machine learning algorithms. 
+
+Motivated by successful applications of bilinear projections in
+various machine learning methods (e.g. bilinear hashing \cite{Gong}, feed forward neural nets \cite{Daniusis}, SVM's \cite{Cai}), we devote this study to an analysis of their effectiveness in RNN's.
 
 
 This article contributes to RNN's by applying bilinear products to derive new modification of long short-term memory (LSTM) \cite{Hochreiter} and gated recurrent unit (GRU) \cite{Chung} recurrent neural networks, and conducting an empirical analysis of suggested models. LSTM and GRU were chosen because of their effectiveness.
@@ -191,7 +196,6 @@ output gates, $\tilde{c}_{t}$ - candidate cell memory, $c_{t}$ - cell memory, an
 All aforementioned variables are $D_{h}$- dimensional. Parameter count of LSTM is 
 $4 \cdot D_{h} \cdot (D_{x}  + D_{h} + 1)$, and state is defined by $2 \cdot D_{h}$ variables.
 
-The intuition behind LSTM
 $c_{t}$ may be interpreted as internal memory of LSTM, while $h_{t}$ - represent its content, 
 exposed by the output gate.
 
@@ -203,7 +207,7 @@ Similar and simpler recurrent architecture, gated recurrent unit (GRU) \cite{Chu
 \label{LSTM}
 u_{t} &=\sigma(W^{i}x_{t} + U^{i}h_{t-1} + b^{i})\\
 r_{t} &=\sigma(W^{f}x_{t} + U^{f}h_{t-1} + b^{f})\\
-\tilde{h}_{t} &= th(W^{h}x_{t} + r_{t} \bullet (U^{h}h_{t-1}) + b^{h})\\
+\tilde{h}_{t} &= \tanh(W^{h}x_{t} + r_{t} \bullet (U^{h}h_{t-1}) + b^{h})\\
 h_{t} &= u_{t} \bullet \tilde{h}_{t} + (1 - u_{t}) \bullet h_{t-1}, \qedhere
 \end{split}
 \end{align}
@@ -215,16 +219,18 @@ h_{t} &= u_{t} \bullet \tilde{h}_{t} + (1 - u_{t}) \bullet h_{t-1}, \qedhere
 
 \subsection{Bilinear analogues of LSTM and GRU}
 
+Linear projections plays fundamental role in many machine learning algorithms. However, in its conventional form it ignores the internal structure of the data, which may be important.
 
 This section describes bilinear LSTM and GRU RNN's. We assume that the inputs $X_{t}$ are $D_{X}^{1} \times D_{X}^{2}$ matrices, and hidden state variables are $D_{H}^{1} \times D_{H}^{2}$ matrices. Bilinear SRNN can now be reformulated as:
-$H_{t} = \phi(W_{1}X_{t}W_{2} + U_{1}H_{t-1}U_{2} + B)$, where $\phi$ is non-linear activation function, and parameter matrices of appropriate dimensions. 
+$H_{t} = \phi(W_{1}X_{t}W_{2} + U_{1}H_{t-1}U_{2} + B)$, where $\phi$ is non-linear activation function, and parameter matrices $W_{1}$,$W_{2}$,$U_{1}$, $U_{2}$ and $B$ of appropriate dimensions.
 
-We expect that such an approach allows to capture linear row and column structures of the data, and is more compact in terms of parameters (see  Table~\ref{table:parameters_and_states}).
+We expect that such an approach allows to capture linear row and column structures of the data, and is more compact in terms of parameters (see Table~\ref{table:parameters_and_states}).
 
 
 \subsubsection{Bilinear LSTM (BLSTM)} 
 \begin{align}
 \begin{split}
+\label{BLSTM}
 I_{t} &=\sigma(W_{1}^{i}X_{t}W_{2}^{i} + U_{1}^{i}H_{t-1}U_{2}^{i}  +  B^{i})\\
 F_{t} &=\sigma(W_{1}^{f}X_{t}W_{2}^{f} + U_{1}^{f}H_{t-1}U_{2}^{f}  +  B^{f})\\
 O_{t} &=\sigma(W_{1}^{o}X_{t}W_{2}^{o} + U_{o}^{i}H_{t-1}U_{2}^{o}  +  B^{o})\\
@@ -238,13 +244,16 @@ H_{t} &= O_{t}\bullet \tanh(C_{t}),
 
 \subsubsection{Bilinear GRU (BGRU)} 
 \begin{align}
-\begin{split}\nonumber
+\begin{split}
+\label{BGRU}
 R_{t} &=\sigma(W_{1}^{i}X_{t}W_{2}^{i} + U_{1}^{i}H_{t-1}U_{2}^{i}  +  B^{i})\\
 U_{t} &=\sigma(W_{1}^{f}X_{t}W_{2}^{f} + U_{1}^{f}H_{t-1}U_{2}^{f}  +  B^{f})\\
 \tilde{H}_{t} &= th(W_{1}^{c}X_{t}W_{2}^{c} + R_{T} \bullet (U_{1}^{c}H_{t-1}U_{2}^{c})  +  B^{c})\\
-H_{t} &= U_{t}\bullet \tilde{H}_{t} + (11^{T} - U_{t})\bullet H_{t-1},
+H_{t} &= U_{t}\bullet \tilde{H}_{t} + (1_{D_{H}^{1}}1_{D_{H}^{2}}^{T} - U_{t})\bullet H_{t-1},
 \end{split}.
 \end{align}
+
+\noindent where $1_{d} \in \mathbb{R}^{d}$ is column vector of ones. All the variables in Eq.~\eqref{BLSTM} and Eq.~\eqref{BGRU} are $D_{H}^{1} \times D_{H}^{2}$ dimensional matrices.
 
 %\subsubsection{Analysis}
 
@@ -273,12 +282,13 @@ H_{t} &= U_{t}\bullet \tilde{H}_{t} + (11^{T} - U_{t})\bullet H_{t-1},
 
 This section is devoted to computer experiments of suggested bilinear RNN's.
 
-\subsection{Meta-learning of regularizer}
 
-\subsection{Meta-learning of RNN}
-
-In this experiment we follow scheme described in \cite{Andrychowicz} and try to learn parameters of conventional LSTM using BLSTM.
-
+%\subsection{Approximation via LSTM}
+%We generate 
+%\subsection{Meta-learning of regularizer}
+%\subsection{Meta-learning of RNN}
+%In this experiment we follow scheme described in \cite{Andrychowicz} and try to learn parameters of conventional LSTM using BLSTM.
+% Hyper RNN?
 
 
 
