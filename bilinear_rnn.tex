@@ -167,14 +167,14 @@ h_{t} = \phi(Wx_{t} + Uh_{t-1} + b),
 
 \noindent where $h_{t}$ is state vector, $W$ and $U$ are parameter matrices, $b$ is bias vector, and $\phi$ - activation function \cite{Elman}. 
 Receiving the sequence of inputs $x_{t}$, the model maintains  state $h_{t}$, and 
-outputs $y_{t} = \psi(Vh_{t} + c)$, where $V$ and $c$ are another parameters, and $\psi$ is output activation function. Although SRNN is able to learn non-trivial sequential regularities, in practice it is rather limited. The limitations of SRNN arise from so called gradien vanishing/exploding effect~\cite{Bengio}.
+outputs $y_{t} = \psi(Vh_{t} + c)$, where $V$ and $c$ are another parameters, and $\psi$ is output activation function. Although SRNN is able to learn non-trivial sequential regularities, in practice it is rather limited. The limitations of SRNN arise from so called gradient vanishing/exploding effect~\cite{Bengio}.
 
 
 
 \subsubsection{LSTM}
 
 
-LSTM \cite{Hochreiter} ameliorates aforementioned drawbacks of SRNN by refining the state update scheme. It relies on the combination of two innovations: gate mechanism and additive state updates. The state  variable of LSTM is a pair of vectors $(c_{t}, h_{t})$, which may be interpreted as "long" and "short" type memories. 
+LSTM \cite{Hochreiter} deals with aforementioned drawbacks of SRNN by refining the state update scheme. It relies on the combination of two innovations: gate mechanism and additive state updates. The state  variable of LSTM is a pair of vectors $(c_{t}, h_{t})$, which may be interpreted as "long" and "short" type memories. 
 
 
 After receiving new input $x_{t}$ the LSTM combines it with the $h_{t-1}$ into new candidate memory $
@@ -260,7 +260,6 @@ H_{t} &= U_{t}\bullet \tilde{H}_{t} + (1_{D_{H}^{1}}1_{D_{H}^{2}}^{T} - U_{t})\b
 
 \noindent where $1_{d} \in \mathbb{R}^{d}$ is column vector of ones. All the variables in Eq.~\eqref{BLSTM} and Eq.~\eqref{BGRU} are $D_{H}^{1} \times D_{H}^{2}$ dimensional matrices.
 
-%\subsubsection{Analysis}
 
 \begin{table}
 \begin{tabular}{ |l|l|l| }
@@ -285,7 +284,16 @@ H_{t} &= U_{t}\bullet \tilde{H}_{t} + (1_{D_{H}^{1}}1_{D_{H}^{2}}^{T} - U_{t})\b
 
 \section{Computer experiments}
 
-This section is devoted to computer experiments of suggested bilinear RNN's.
+In this section we describe computer experiments with suggested bilinear RNN's.
+
+\subsection{Patterns in sequence of matrices}
+
+We generate artificial data set consisting of $1000$ training and $1000$ testing 
+sequences of matrix inputs and matrix outputs. Each input sequence consists of $10$
+$64 \times 64$ matrices $X_{1}, X_{2}, ... X_{10}$, and $16 \times 16$ output matrix
+is matrix defined by
+
+
 
 
 %\subsection{Approximation via LSTM}
