@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 
 import cv2, requests, numpy
 import time
-#from egrucell import *
+from egrucell import *
 #from supercell import *
 from bilinear_rnn import *
 #from multicelllstm import *
@@ -30,20 +30,15 @@ from bilinear_rnn import *
 
 import tensorflow as tf
 
-from tensorflow.python.ops import control_flow_ops
-from datasets import dataset_factory
-from deployment import model_deploy
-from nets import nets_factory
-from preprocessing import preprocessing_factory
+#from tensorflow.python.ops import control_flow_ops
+#from datasets import dataset_factory
+#from deployment import model_deploy
+#from nets import nets_factory
+#from preprocessing import preprocessing_factory
 
-slim = tf.contrib.slim
-
-
-
-
-slim = tf.contrib.slim
-
-from slim.datasets import download_and_convert_cifar10
+#slim = tf.contrib.slim
+#slim = tf.contrib.slim
+#from slim.datasets import download_and_convert_cifar10
 
 # Import MNIST data
 from tensorflow.examples.tutorials.mnist import input_data
@@ -73,13 +68,13 @@ handle 28 sequences of 28 steps for every sample.
 
 # Parameters
 learning_rate = 0.001
-training_iters = 1000000
+training_iters = 0.5 * 100000
 batch_size = 128
 display_step = 10
 
 # Network Parameters
 n_input = 28 # MNIST data input (img shape: 28*28)
-n_steps = 28 # timesteps
+n_steps = 2*28 # timesteps
 n_hidden = 128 # hidden layer num of features
 n_classes = 10 # MNIST total classes (0-9 digits)
 
@@ -98,8 +93,10 @@ biases = {
 
 def RNN(x, weights, biases):
 
-    rnn_cell = BilinearLSTM(input_shape = [7,4], hidden_shape = [32, 4])
+    #rnn_cell = BilinearLSTM(input_shape = [7,4], hidden_shape = [32, 4])
 
+    rnn_cell = EGRUCell(n_hidden)
+    #rnn_cell = rnn.GRUCell(n_hidden)
 
     # Prepare data shape to match `rnn` function requirements
     # Current data input shape: (batch_size, n_steps, n_input)
@@ -118,13 +115,21 @@ def RNN(x, weights, biases):
 
     outputs, states = tf.contrib.rnn.static_rnn(rnn_cell, x, dtype=tf.float32)
    
-    print (len(outputs))
-    print(outputs[-1].get_shape())
+    #print (len(outputs))
+    #print(outputs[-1].get_shape())
     #print(states.get_shape())
 
 
     # Linear activation, using rnn inner loop last output
     return tf.matmul(outputs[-1], weights['out']) + biases['out']
+
+
+def prepare_batch(batch_x):
+  batch_x_t = np.transpose(batch_x, [0, 2, 1])
+  batch_x_new = np.concatenate([batch_x, batch_x_t], 1)
+ 
+  return batch_x_new
+
 
 pred = RNN(x, weights, biases)
 
@@ -144,8 +149,13 @@ with tf.Session() as sess:
     # Keep training until reach max iterations
     while step * batch_size < training_iters:
         batch_x, batch_y = mnist.train.next_batch(batch_size)
+	
+
         # Reshape data to get 28 seq of 28 elements
-        batch_x = batch_x.reshape((batch_size, n_steps, n_input))
+        batch_x = batch_x.reshape((batch_size, 28, n_input))
+
+	batch_x = prepare_batch(batch_x)
+
         # Run optimization op (backprop)
         sess.run(optimizer, feed_dict={x: batch_x, y: batch_y})
         if step % display_step == 0:
@@ -160,8 +170,10 @@ with tf.Session() as sess:
     print("Optimization Finished!")
 
 
-    test_len = 1024
-    test_data = mnist.test.images[:test_len].reshape((-1, n_steps, n_input))
+    test_len = 40000
+    test_data = mnist.test.images[:test_len].reshape((-1, 28, n_input))    
+    test_data = prepare_batch(test_data)
+
     test_label = mnist.test.labels[:test_len]
     print("Testing Accuracy:", \
         sess.run(accuracy, feed_dict={x: test_data, y: test_label}))

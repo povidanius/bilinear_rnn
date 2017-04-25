@@ -144,10 +144,6 @@ Although theoretically RNN's are capable of performing arbitrary computations \c
 
 
 
-
-%For example, bilinear hashing \cite{Gong}, feed forward neural nets \cite{Daniusis}, SVM's \cite{Cai} in certain cases can be more efficient than conventional analogues.
-%Linear projections plays fundamental role in many machine learning algorithms. 
-
 Motivated by successful applications of bilinear projections in
 various machine learning methods (e.g. bilinear hashing \cite{Gong}, feed forward neural nets \cite{Daniusis}, SVM's \cite{Cai}), we devote this study to an analysis of their effectiveness in RNN's.
 
@@ -160,25 +156,36 @@ Main advantages of our approach are that it can be used directly for matrix-valu
 
 
 \subsection{Short review of RNN models}
+
 Let $t$ be discrete time variable, and let $x_{t} \in \mathbb{R}^{D_{x}}$ be corresponding input vectors. Simple RNN (SRNN) model is defined by 
-recurrence $h_{t} = \phi(Wx_{t} + Uh_{t-1} + b)$, where $h_{t}$ is hidden state vector, 
-$W$ and $U$ are parameter matrices, $b$ is bias vector, and $\phi$ - activation function \cite{Elman}. 
-Receiving the sequence of inputs $x_{t}$, the model maintains hidden state $h_{t}$, and 
-outputs $y_{t} = \psi(Vh_{t} + c)$, where $V$ and $c$ are another parameters, and $\psi$ is output activation function. Although SRNN is able to learn non-trivial sequential regularities, in practice it is rather limited. 
+recurrence 
+
+\begin{equation}
+\label{eq:SRNN}
+h_{t} = \phi(Wx_{t} + Uh_{t-1} + b),
+\end{equation}
+
+\noindent where $h_{t}$ is state vector, $W$ and $U$ are parameter matrices, $b$ is bias vector, and $\phi$ - activation function \cite{Elman}. 
+Receiving the sequence of inputs $x_{t}$, the model maintains  state $h_{t}$, and 
+outputs $y_{t} = \psi(Vh_{t} + c)$, where $V$ and $c$ are another parameters, and $\psi$ is output activation function. Although SRNN is able to learn non-trivial sequential regularities, in practice it is rather limited. The limitations of SRNN arise from so called gradien vanishing/exploding effect~\cite{Bengio}.
+
 
 
 \subsubsection{LSTM}
 
 
-LSTM \cite{Hochreiter} relies on the combination of two innovations: gate mechanism and additive state update mechanism.
+LSTM \cite{Hochreiter} ameliorates aforementioned drawbacks of SRNN by refining the state update scheme. It relies on the combination of two innovations: gate mechanism and additive state updates. The state  variable of LSTM is a pair of vectors $(c_{t}, h_{t})$, which may be interpreted as "long" and "short" type memories. 
 
-Upon receiving new input $x_{t}$ the LSTM combines it with hidden state into new candidate memory vector.
 
-The input gate controls an integration of this new information into cell's memory, allowing to 
-inhibit certain components of candidate cell. Similarly, the forget gate controls integration or previous memory, 
-and output gate determines exposition weights of $c_{t}$.
+After receiving new input $x_{t}$ the LSTM combines it with the $h_{t-1}$ into new candidate memory $
+\tilde{c}_{t}$, and constructs gates $i_{t}$, $f_{t}$ and $o_{t}$. 
 
-An update of LSTM state $(c_{t}, h_{t})^{T}$ is defined by:
+The input gate $i_{t}$ controls the integration of candidate $\tilde{c}_{t}$ into $c_{t}$, allowing to 
+inhibit or activate certain components of candidate cell. Similarly, the forget gate $f_{t}$ controls integration or previous memory $c_{t-1}$, 
+and output gate $o_{t}$ multiplicatively exposes $c_{t}$ into new hidden state $h_{t}$.
+
+Formally, LSTM model is defined by:
+
 \begin{align}
 \begin{split}
 \label{LSTM}
@@ -191,13 +198,11 @@ h_{t} &=o_{t} \bullet \tanh(c_{t}), \qedhere
 \end{split},
 \end{align}
 
-Where $\bullet$ denotes element-wise multiplication, $i_{t}$, $f_{t}$, $o_{t}$ are called input, forget and 
-output gates, $\tilde{c}_{t}$ - candidate cell memory, $c_{t}$ - cell memory, and $h_{t}$ - hidden state. 
-All aforementioned variables are $D_{h}$- dimensional. Parameter count of LSTM is 
-$4 \cdot D_{h} \cdot (D_{x}  + D_{h} + 1)$, and state is defined by $2 \cdot D_{h}$ variables.
+\noindent where $\bullet$ denotes element-wise multiplication,  $\sigma$ and $\tanh$ denotes sigmoid and hyperbolic tangent. All the gates and state variables are $D_{h}$ - dimensional vectors. LSTM is defined by $4 \cdot D_{h} \cdot (D_{x}  + D_{h} + 1)$, and state is defined by $2 \cdot D_{h}$ variables.
 
-$c_{t}$ may be interpreted as internal memory of LSTM, while $h_{t}$ - represent its content, 
-exposed by the output gate.
+%Linearly changing $c_{t}$ may be interpreted as "long" memory, while fast changing $h_{t}$ represents "short" memory.
+
+%$c_{t}$ may be interpreted as internal memory of LSTM, while $h_{t}$ - represent its content, exposed by the output gate.
 
 \subsubsection{GRU}
 Similar and simpler recurrent architecture, gated recurrent unit (GRU) \cite{Chung}, is defined by:
@@ -212,7 +217,7 @@ h_{t} &= u_{t} \bullet \tilde{h}_{t} + (1 - u_{t}) \bullet h_{t-1}, \qedhere
 \end{split}
 \end{align}
 
-\noindent Reset gate $r_{t}$ controls integration of previous state $h_{t-1}$ into candidate state $\tilde{h}_{t}$, and update gate $u_{t}$ controls integration of candidate state into state update. GRU has $ 3 \cdot D_{h} \cdot (D_{x}  + D_{h} + 1) $ parameters and $D_{h}$-dimensional state variable.
+\noindent Reset gate $r_{t}$ controls integration of previous state $h_{t-1}$ into candidate state $\tilde{h}_{t}$, and update gate $u_{t}$ controls integration of candidate state into state update. GRU has $ 3 \cdot D_{h} \cdot (D_{x}  + D_{h} + 1) $ parameters and $D_{h}$-dimensional state variable. The effectiveness of GRU and LSTM is often very similar.
 
 
 
@@ -313,7 +318,7 @@ ICCV, 2015.
 
 \bibitem{Chung} Chung, J., Gulcehre, C., Cho, K., and Bengio, Y. Empirical evaluation of gated recurrent neural networks on sequence modeling. NIPS Deep Learning Workshop, 2014.
 
-\bibitem{Daniusis} Daniusis, P., and Vaitkus, Pr. Neural network with matrix inputs. Informatica, 2008, vol.19 (4): 477-486.
+\bibitem{Daniusis} Daniu\v{s}is, P., and Vaitkus, Pr. Neural network with matrix inputs. Informatica, 2008, vol.19 (4): 477-486.
 
 
 \bibitem{Elman} Elman, J. L. Finding structure in time.  CRL Technical Report 8801, Center for Research in Language, University
