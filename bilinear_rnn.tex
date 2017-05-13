@@ -148,9 +148,9 @@ Motivated by successful applications of bilinear projections in
 various machine learning methods (e.g. bilinear hashing \cite{Gong}, feed forward neural nets \cite{Daniusis}, SVM's \cite{Cai}), we devote this study to an analysis of their effectiveness in RNN's.
 
 
-This article contributes to RNN's by applying bilinear products to derive new modification of long short-term memory (LSTM) \cite{Hochreiter} and gated recurrent unit (GRU) \cite{Chung} recurrent neural networks, and conducting an empirical analysis of suggested models. LSTM and GRU were chosen because of their effectiveness.
+This article contributes to RNN's by applying bilinear products to derive new modification of long short-term memory (LSTM) \cite{Hochreiter} and gated recurrent unit (GRU) \cite{Chung} recurrent neural networks, and conducting an empirical analysis of suggested models. LSTM and GRU were chosen because of their effectiveness in applications.
 
-Main advantages of our approach are that it can be used directly for matrix-valued sequences, is able to capture the structure of such a data more efficiently comparing to conventional analogues, and contains less parameters. Tensorflow \cite{Tensorflow} implementation of suggested bilinear RNN's can be downloaded from \url{https://github.com/povidanius/bilinear_rnn}.
+Main advantages of our approach are that it can be used directly for matrix-valued sequences, is able to exploit the structure of such a data more efficiently comparing to conventional analogues, and contains less parameters. Tensorflow \cite{Tensorflow} implementation of suggested bilinear RNN's can be downloaded from \url{https://github.com/povidanius/bilinear_rnn}.
 
 
 
@@ -171,14 +171,14 @@ outputs $y_{t} = \psi(Vh_{t} + c)$, where $V$ and $c$ are another parameters, an
 
 
 
-\subsubsection{LSTM}
+\subsubsection{Long short-term memory}
 
 
-LSTM \cite{Hochreiter} deals with aforementioned drawbacks of SRNN by refining the state update scheme. It relies on the combination of two innovations: gate mechanism and additive state updates. The state  variable of LSTM is a pair of vectors $(c_{t}, h_{t})$, which may be interpreted as "long" and "short" type memories. 
+Long short-term memory (LSTM) \cite{Hochreiter} deals with aforementioned drawbacks of SRNN by refining the state update scheme. It relies on the combination of two innovations: gate mechanism and additive state updates. The state  variable of LSTM is a pair of vectors $(c_{t}, h_{t})$, which may be interpreted as "long" and "short" type memories. %"Long"-type memory is updated linearly, and "short"-type memory is mul
 
 
-After receiving new input $x_{t}$ the LSTM combines it with the $h_{t-1}$ into new candidate memory $
-\tilde{c}_{t}$, and constructs gates $i_{t}$, $f_{t}$ and $o_{t}$. 
+After receiving new input datum $x_{t}$ the LSTM combines it with $h_{t-1}$ into new candidate memory $
+\tilde{c}_{t}$, and gate variables $i_{t}$, $f_{t}$ and $o_{t}$. 
 
 The input gate $i_{t}$ controls the integration of candidate $\tilde{c}_{t}$ into $c_{t}$, allowing to 
 inhibit or activate certain components of candidate cell. Similarly, the forget gate $f_{t}$ controls integration or previous memory $c_{t-1}$, 
@@ -193,18 +193,16 @@ i_{t} &=\sigma(W^{i}x_{t} + U^{i}h_{t-1} + b^{i})\\
 f_{t} &=\sigma(W^{f}x_{t} + U^{f}h_{t-1} + b^{f})\\
 o_{t} &=\sigma(W^{o}x_{t} + U^{o}h_{t-1} + b^{o})\\
 \tilde{c}_{t} &= \tanh(W^{c}x_{t} + U^{c}h_{t-1} + b^{c})\\
-c_{t} &=f_{t} \bullet c_{t-1} + i_{t} \bullet \tilde{c}_{t}\\
-h_{t} &=o_{t} \bullet \tanh(c_{t}), \qedhere
+c_{t} &=f_{t} \odot c_{t-1} + i_{t} \odot \tilde{c}_{t}\\
+h_{t} &=o_{t} \odot \tanh(c_{t}), \qedhere
 \end{split},
 \end{align}
 
-\noindent where $\bullet$ denotes element-wise multiplication,  $\sigma$ and $\tanh$ denotes sigmoid and hyperbolic tangent. All the gates and state variables are $D_{h}$ - dimensional vectors. LSTM is defined by $4 \cdot D_{h} \cdot (D_{x}  + D_{h} + 1)$, and state is defined by $2 \cdot D_{h}$ variables.
+\noindent where $\odot$ denotes element-wise multiplication,  $\sigma$ and $\tanh$ denotes sigmoid and hyperbolic tangent functions. All the gates and state variables are $D_{h}$ - dimensional vectors. LSTM is defined by $4 \cdot D_{h} \cdot (D_{x}  + D_{h} + 1)$, and state is defined by $2 \cdot D_{h}$ variables.
 
-%Linearly changing $c_{t}$ may be interpreted as "long" memory, while fast changing $h_{t}$ represents "short" memory.
 
-%$c_{t}$ may be interpreted as internal memory of LSTM, while $h_{t}$ - represent its content, exposed by the output gate.
+\subsubsection{Gated recurrent unit}
 
-\subsubsection{GRU}
 Similar and simpler recurrent architecture, gated recurrent unit (GRU) \cite{Chung}, is defined by:
 
 \begin{align}
@@ -212,24 +210,28 @@ Similar and simpler recurrent architecture, gated recurrent unit (GRU) \cite{Chu
 \label{LSTM}
 u_{t} &=\sigma(W^{i}x_{t} + U^{i}h_{t-1} + b^{i})\\
 r_{t} &=\sigma(W^{f}x_{t} + U^{f}h_{t-1} + b^{f})\\
-\tilde{h}_{t} &= \tanh(W^{h}x_{t} + r_{t} \bullet (U^{h}h_{t-1}) + b^{h})\\
-h_{t} &= u_{t} \bullet \tilde{h}_{t} + (1 - u_{t}) \bullet h_{t-1}, \qedhere
+\tilde{h}_{t} &= \tanh(W^{h}x_{t} + r_{t} \odot (U^{h}h_{t-1}) + b^{h})\\
+h_{t} &= u_{t} \odot \tilde{h}_{t} + (1 - u_{t}) \odot h_{t-1}, \qedhere
 \end{split}
 \end{align}
 
-\noindent Reset gate $r_{t}$ controls integration of previous state $h_{t-1}$ into candidate state $\tilde{h}_{t}$, and update gate $u_{t}$ controls integration of candidate state into state update. GRU has $ 3 \cdot D_{h} \cdot (D_{x}  + D_{h} + 1) $ parameters and $D_{h}$-dimensional state variable. The effectiveness of GRU and LSTM is often very similar.
+\noindent Reset gate $r_{t}$ controls integration of previous state $h_{t-1}$ into candidate state $\tilde{h}_{t}$, and update gate $u_{t}$ controls integration of candidate state into state update. GRU has $ 3 \cdot D_{h} \cdot (D_{x}  + D_{h} + 1) $ parameters and $D_{h}$-dimensional state variable. The effectiveness of GRU and LSTM is often very similar \cite{Jozefowicz}.
 
 
 
 
-\subsection{Bilinear analogues of LSTM and GRU}
+\section{RNN with bilinear projections}
 
-Linear projections plays fundamental role in many machine learning algorithms. However, in its conventional form it ignores the internal structure of the data, which may be important.
+Linear projections plays fundamental role in many machine learning algorithms. However, in its conventional form it ignores the internal structure of the data, which may be important. 
 
 This section describes bilinear LSTM and GRU RNN's. We assume that the inputs $X_{t}$ are $D_{X}^{1} \times D_{X}^{2}$ matrices, and hidden state variables are $D_{H}^{1} \times D_{H}^{2}$ matrices. Bilinear SRNN can now be reformulated as:
-$H_{t} = \phi(W_{1}X_{t}W_{2} + U_{1}H_{t-1}U_{2} + B)$, where $\phi$ is non-linear activation function, and parameter matrices $W_{1}$,$W_{2}$,$U_{1}$, $U_{2}$ and $B$ of appropriate dimensions.
+\begin{equation}
+\label{BSRNN}
+H_{t} = \phi(W_{1}X_{t}W_{2} + U_{1}H_{t-1}U_{2} + B),
+\end{equation}
+\noindent where $\phi$ is non-linear activation function, and parameter matrices $W_{1}$,$W_{2}$,$U_{1}$, $U_{2}$ and $B$ of appropriate dimensions.
 
-We expect that such an approach allows to capture linear row and column structures of the data, and is more compact in terms of parameters (see Table~\ref{table:parameters_and_states}).
+We hypothesise that bilinear projections allow to exploit linear row-column structures of input matrix. Comparing to conventional RNN's, bilinear RNN's are also more compact in terms of parameters (see Table~\ref{table:parameters_and_states}).
 
 
 \subsubsection{Bilinear LSTM (BLSTM)} 
@@ -240,12 +242,10 @@ I_{t} &=\sigma(W_{1}^{i}X_{t}W_{2}^{i} + U_{1}^{i}H_{t-1}U_{2}^{i}  +  B^{i})\\
 F_{t} &=\sigma(W_{1}^{f}X_{t}W_{2}^{f} + U_{1}^{f}H_{t-1}U_{2}^{f}  +  B^{f})\\
 O_{t} &=\sigma(W_{1}^{o}X_{t}W_{2}^{o} + U_{o}^{i}H_{t-1}U_{2}^{o}  +  B^{o})\\
 \tilde{C}_{t} &=\tanh(W_{1}^{c}X_{t}W_{2}^{c} + U_{1}^{c}H_{t-1}U_{2}^{c}  +  B^{c})\\
-C_{t} &= F_{t} \bullet C_{t-1} + I_{t} \bullet \tilde{C}_{t}\\
-H_{t} &= O_{t}\bullet \tanh(C_{t}),
+C_{t} &= F_{t} \odot C_{t-1} + I_{t} \odot \tilde{C}_{t}\\
+H_{t} &= O_{t}\odot \tanh(C_{t}),
 \end{split}.
 \end{align}
-
-
 
 \subsubsection{Bilinear GRU (BGRU)} 
 \begin{align}
@@ -253,8 +253,8 @@ H_{t} &= O_{t}\bullet \tanh(C_{t}),
 \label{BGRU}
 R_{t} &=\sigma(W_{1}^{i}X_{t}W_{2}^{i} + U_{1}^{i}H_{t-1}U_{2}^{i}  +  B^{i})\\
 U_{t} &=\sigma(W_{1}^{f}X_{t}W_{2}^{f} + U_{1}^{f}H_{t-1}U_{2}^{f}  +  B^{f})\\
-\tilde{H}_{t} &= th(W_{1}^{c}X_{t}W_{2}^{c} + R_{T} \bullet (U_{1}^{c}H_{t-1}U_{2}^{c})  +  B^{c})\\
-H_{t} &= U_{t}\bullet \tilde{H}_{t} + (1_{D_{H}^{1}}1_{D_{H}^{2}}^{T} - U_{t})\bullet H_{t-1},
+\tilde{H}_{t} &= \tanh(W_{1}^{c}X_{t}W_{2}^{c} + R_{T} \odot (U_{1}^{c}H_{t-1}U_{2}^{c})  +  B^{c})\\
+H_{t} &= U_{t}\odot \tilde{H}_{t} + (1_{D_{H}^{1}}1_{D_{H}^{2}}^{T} - U_{t})\odot H_{t-1},
 \end{split}.
 \end{align}
 
@@ -264,7 +264,7 @@ H_{t} &= U_{t}\bullet \tilde{H}_{t} + (1_{D_{H}^{1}}1_{D_{H}^{2}}^{T} - U_{t})\b
 \begin{table}
 \begin{tabular}{ |l|l|l| }
   \hline
-   Method & Parameter dimension & State dimension \\
+   RNN model & Parameter dimension & State dimension \\
   \hline   
    LSTM & $ 4 \cdot D_{h} \cdot (D_{x}  + D_{h} + 1)$  & $2D_{h}$ \\
   \hline   
@@ -275,7 +275,7 @@ H_{t} &= U_{t}\bullet \tilde{H}_{t} + (1_{D_{H}^{1}}1_{D_{H}^{2}}^{T} - U_{t})\b
    BGRU & 	$3 \dot ( D_{H}^{1} (D_{X}^{1} + D_{H}^{1} + D_{H}^{2}) + D_{H}^{2} (D_{X}^{2} + D_{H}^{2}))$ & $ D_{H}^{1} D_{H}^{2}$\\
   \hline
 \end{tabular}
-  \caption{Parameter and state space dimensionalities}
+  \caption{Parameter and state space dimensionalities.}
 \label{table:parameters_and_states}
 \end{table}
 
@@ -288,13 +288,21 @@ In this section we describe computer experiments with suggested bilinear RNN's.
 
 \subsection{Patterns in sequence of matrices}
 
-We generate artificial data set consisting of $1000$ training and $1000$ testing 
-sequences of matrix inputs and matrix outputs. Each input sequence consists of $10$
-$64 \times 64$ matrices $X_{1}, X_{2}, ... X_{10}$, and $16 \times 16$ output matrix
-is matrix defined by
+We generate toy data set consisting of $2000$ training, and $1000$ testing 
+sequences of matrix inputs and matrix outputs. Each input sequence consists of $20$
+$16 \times 16$ matrices $X_{1}, X_{2}, ... X_{20}$ composed of i.i.d. Gaussian entries, and $16 \times 16$ output matrix defined by so that it would depend both from long and short range $Y = \max(X_{2}, \frac{1}{2} (X_{19}^{T} + X_{20}))$
+
+\subsection{Recovering eigendecomposition}
+\subsection{Portfolio optimization}
 
 
 
+%\begin{align}
+% Y(i,j) &= \begin{cases}
+%	1 & \text{if} \max(X_{10}(i,j), X_{8}(i,j)) \geq  \max(X_{2}%(i,j),X_{3}(i,j))\\
+%	0 & \text{if} otherwise
+%     \end{cases}
+%\end{align}
 
 %\subsection{Approximation via LSTM}
 %We generate 
@@ -349,6 +357,8 @@ of California, San Diego, 1988.
 
 \bibitem{Hochreiter} Hochreiter, S.  and  Schmidhuber J. Long  Short-Term  Memory. Neural  Computation, 9(8): pp. 1735-1780, 1997.
 
+
+\bibitem{Jozefowicz} Jozefowicz, R., Zaremba, W., and Sutskever, I. An Empirical Exploration of Recurrent Network Architectures. In ICML2015, p.p. 2342-2350, 2015.
 
 
 %\bibitem{Kingma} Kingma,  D.,  and  Ba,  J.
