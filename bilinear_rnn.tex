@@ -148,7 +148,7 @@ Motivated by successful applications of bilinear projections in
 various machine learning methods (e.g. bilinear hashing \cite{Gong}, feed forward neural nets \cite{Daniusis}, SVM's \cite{Cai}), we devote this study to an analysis of their effectiveness in RNN's.
 
 
-This article contributes to RNN's by applying bilinear products to derive new modification of long short-term memory (LSTM) \cite{Hochreiter} and gated recurrent unit (GRU) \cite{Chung} recurrent neural networks, and conducting an empirical analysis of suggested models. LSTM and GRU were chosen because of their effectiveness in applications.
+This article contributes to RNN's by applying bilinear products to derive new modification of long short-term memory (LSTM) \cite{Hochreiter} and gated recurrent unit (GRU) \cite{Chung} recurrent neural networks, and conducting an empirical analysis of suggested models. LSTM and GRU were chosen because of their practical effectiveness.
 
 Main advantages of our approach are that it can be used directly for matrix-valued sequences, is able to exploit the structure of such a data more efficiently comparing to conventional analogues, and contains less parameters. Tensorflow \cite{Tensorflow} implementation of suggested bilinear RNN's can be downloaded from \url{https://github.com/povidanius/bilinear_rnn}.
 
@@ -156,6 +156,8 @@ Main advantages of our approach are that it can be used directly for matrix-valu
 
 
 \subsection{Short review of RNN models}
+
+In this section we review Elman (simple RNN), GRU and LSTM models, since they  will be useful for our research. We refer the reader to~\cite{Haykin}, and~\cite{Schmidhuber} for more comprehensive review of various neural network models (including RNN).
 
 Let $t$ be discrete time variable, and let $x_{t} \in \mathbb{R}^{D_{x}}$ be corresponding input vectors. Simple RNN (SRNN) model is defined by 
 recurrence 
@@ -286,17 +288,33 @@ H_{t} &= U_{t}\odot \tilde{H}_{t} + (1_{D_{H}^{1}}1_{D_{H}^{2}}^{T} - U_{t})\odo
 
 In this section we describe computer experiments with suggested bilinear RNN's.
 
-\subsection{Patterns in sequence of matrices}
+\subsection{Patterns in a sequence of matrices}
 
-We generate toy data set consisting of $2000$ training, and $1000$ testing 
+We will investigate detection of patterns in a sequence of input matrices. We generate toy data set consisting of $2000$ training, and $1000$ testing 
 sequences of matrix inputs and matrix outputs. Each input sequence consists of $20$
-$16 \times 16$ matrices $X_{1}, X_{2}, ... X_{20}$ composed of i.i.d. Gaussian entries, and $16 \times 16$ output matrix defined by so that it would depend both from long and short range $Y = \max(X_{2}, \frac{1}{2} (X_{19}^{T} + X_{20}))$
+$16 \times 16$ matrices $X_{1}, X_{2}, ... X_{20}$ composed of i.i.d. Gaussian entries, and $16 \times 16$ output matrix defined by so that it would depend both from long and short range $Y = \max(X_{2}, \frac{1}{2} (X_{19}^{T} + X_{20}))$. We estimate the output $Y = UH_{20}V + B$, where $U$, $V$ and $B$ are parameter matrices of appropriate dimensions. We train RNN models for $1000$ epochs using Adam~\cite{Kingma} optimizer, and data batches of $128$ elements. In Table~\ref{table:patterns_in_matrix_sequence} we report mean squared errors on the testing set.
 
-\subsection{Recovering eigendecomposition}
-\subsection{Portfolio optimization}
+\begin{table}
+\begin{tabular}{ |l|l|l| }
+  \hline
+   RNN model & Performance & Parameter count \\
+  \hline   
+   LSTM &  0.0  & 0.0 \\
+   BLSTM &  0.0  & 0.0 \\
+   GRU &  0.0  & 0.0 \\
+   BGRU &  0.0  & 0.0 \\
+   SRNN &  0.0  & 0.0 \\
+   BSRNN &  0.0  & 0.0 \\
+  \hline   
+\end{tabular}
+  \caption{Performance comparison (detection of patterns in matrix sequences).}
+\label{table:patterns_in_matrix_sequence}
+\end{table}
 
 
 
+
+%\subsection{Recovering eigendecomposition}
 %\begin{align}
 % Y(i,j) &= \begin{cases}
 %	1 & \text{if} \max(X_{10}(i,j), X_{8}(i,j)) \geq  \max(X_{2}%(i,j),X_{3}(i,j))\\
@@ -313,6 +331,12 @@ $16 \times 16$ matrices $X_{1}, X_{2}, ... X_{20}$ composed of i.i.d. Gaussian e
 
 
 
+\section{Conclusions}
+
+We applied bilinear products to derive modifications of popular recurrent neural networks: Elman (SRNN), GRU and LSTM. Resulting models are well suited for matrix-valued data sequences, are more economical in terms of parameters. Although standard RNN's are also applicable to matrix-valued inputs of specific dimensions ($D_{X}^{2} = D_{H}^{2}$), they omit linear projections of columns, which may be important. Computer experiments also (hopefully will) confirm our hypothesis, that bilinear product allow to exploit structure of data matrices in recurrent neural networks.
+
+
+ 
 
 
 
@@ -361,8 +385,8 @@ of California, San Diego, 1988.
 \bibitem{Jozefowicz} Jozefowicz, R., Zaremba, W., and Sutskever, I. An Empirical Exploration of Recurrent Network Architectures. In ICML2015, p.p. 2342-2350, 2015.
 
 
-%\bibitem{Kingma} Kingma,  D.,  and  Ba,  J.
-%Adam:   A  Method  for Stochastic Optimization. arXiv:1412.6980 [cs.LG], December 2014.
+\bibitem{Kingma} Kingma,  D.,  and  Ba,  J.
+Adam:   A  Method  for Stochastic Optimization. arXiv:1412.6980 [cs.LG], December 2014.
 
 
 \bibitem{Oppenheim} Oppenheim,  A.  V.,  Schafer, R. W.,  Buck,  J. R. Discrete-time signal processing, volume 5.  Prentice Hall Upper Saddle River, 1999.

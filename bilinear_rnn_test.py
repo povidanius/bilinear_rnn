@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 
 dx1 = 10
 dx2 = 10
-dh1 = 20
-dh2 = 20
+dh1 = 5 #20
+dh2 = 5 #20
 dy1 = 10
 dy2 = 10
 num_epochs = 1000
@@ -72,7 +72,7 @@ def generate_data(num_samples = 1000):
 	  	data_x[m, n,:,:] =  get_sample()
 
 	  #data_y[m, :, :] = np.maximum(data_x[m,1,:,:], 0.5 * (data_x[m, 18,:,:] + data_x[m, 19,:,:]))
-	  data_y[m, :, :] =  0.5 * (data_x[m, -2,:,:] + data_x[m, -1,:,:])
+	  data_y[m, :, :] =  0.5 * (data_x[m, -15,:,:] + data_x[m, -1,:,:])
 	return data_x, data_y
 			
 		
@@ -93,32 +93,34 @@ weights = {
 def RNN(x, weights):
 
     # Prepare data shape to match `rnn` function requirements
-    # Current data input shape: (batch_size, n_steps, n_input)
-    # Required shape: 'n_steps' tensors list of shape (batch_size, n_input)
+    # Current data input shape: (batch_size, n_steps, n_input1, n_input2)
+    # Required shape: 'n_steps' tensors list of shape (batch_size, n_input1, n_input2)
 	
    
     # Permuting batch_size and n_steps
     x = tf.transpose(x, [1, 0, 2, 3])
-    # Reshaping to (n_steps*batch_size, n_input)
+    # Reshaping to (n_steps*batch_size, n_input1*n_input2)
     x = tf.reshape(x, [-1, dx1*dx2])
-    # Split to get a list of 'n_steps' tensors of shape (batch_size, n_input)
+    # Split to get a list of 'n_steps' tensors of shape (batch_size, n_input1*n_input2)
     x = tf.split(x, n_steps, 0)
 
-    rnn_cell = BilinearGRU(input_shape = [dx1,dx2], hidden_shape = [dh1, dh2])
-    #rnn_cell = rnn.GRUCell(dh1*dh2)
+    #rnn_cell = BilinearGRU(input_shape = [dx1,dx2], hidden_shape = [dh1, dh2])
+    rnn_cell = rnn.GRUCell(dh1*dh2)
 
     outputs, states = tf.contrib.rnn.static_rnn(rnn_cell, x, dtype=tf.float32)
 
 
 
     out = tf.reshape(outputs[-1],[-1, dh1, dh2])
+
+    # show!	
     prediction = dot(tf.transpose(dot(weights['left'], out), [1, 0, 2]), weights['right']) + weights['biases']
     #prediction = out
 
     return prediction
 
 
-X_train,Y_train = generate_data(2000)
+X_train,Y_train = generate_data(5000)
 X_test, Y_test = generate_data(1000)
 pred = RNN(x, weights)
 loss = tf.reduce_mean(tf.square(tf.subtract(pred, y))) 
