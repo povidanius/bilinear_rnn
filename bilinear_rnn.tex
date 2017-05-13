@@ -292,7 +292,7 @@ In this section we describe computer experiments with suggested bilinear RNN's.
 
 We will investigate detection of patterns in a sequence of input matrices. We generate toy data set consisting of $2000$ training, and $1000$ testing 
 sequences of matrix inputs and matrix outputs. Each input sequence consists of $20$
-$16 \times 16$ matrices $X_{1}, X_{2}, ... X_{20}$ composed of i.i.d. Gaussian entries, and $16 \times 16$ output matrix defined by so that it would depend both from long and short range $Y = \max(X_{2}, \frac{1}{2} (X_{19}^{T} + X_{20}))$. We estimate the output $Y = UH_{20}V + B$, where $U$, $V$ and $B$ are parameter matrices of appropriate dimensions. We train RNN models for $1000$ epochs using Adam~\cite{Kingma} optimizer, and data batches of $128$ elements. In Table~\ref{table:patterns_in_matrix_sequence} we report mean squared errors on the testing set.
+$10 \times 10$ matrices $X_{1}, X_{2}, ... X_{20}$ composed of i.i.d. Gaussian entries, and $10 \times 10$ output matrix defined by so that it would depend both from long and short range $Y =  \frac{1}{2} (X_{5} + X_{20})$. We estimate the output from last hidden state $H_{20}$ by $Y = UH_{20}V + B$, where $U$, $V$ and $B$ are parameter matrices of appropriate dimensions. We train RNN models for $1000$ epochs using Adam~\cite{Kingma} optimizer, and data batches of $128$ elements. In Table~\ref{table:patterns_in_matrix_sequence} we report mean squared errors on the testing set.
 
 \begin{table}
 \begin{tabular}{ |l|l|l| }

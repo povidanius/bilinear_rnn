@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 
 dx1 = 10
 dx2 = 10
-dh1 = 5 #20
-dh2 = 5 #20
+dh1 = 20 #20
+dh2 = 20 #20
 dy1 = 10
 dy2 = 10
 num_epochs = 1000
@@ -72,7 +72,7 @@ def generate_data(num_samples = 1000):
 	  	data_x[m, n,:,:] =  get_sample()
 
 	  #data_y[m, :, :] = np.maximum(data_x[m,1,:,:], 0.5 * (data_x[m, 18,:,:] + data_x[m, 19,:,:]))
-	  data_y[m, :, :] =  0.5 * (data_x[m, -15,:,:] + data_x[m, -1,:,:])
+	  data_y[m, :, :] =  0.5 * (data_x[m,-15,:,:] + data_x[m, -1,:,:])
 	return data_x, data_y
 			
 		
@@ -104,8 +104,8 @@ def RNN(x, weights):
     # Split to get a list of 'n_steps' tensors of shape (batch_size, n_input1*n_input2)
     x = tf.split(x, n_steps, 0)
 
-    #rnn_cell = BilinearGRU(input_shape = [dx1,dx2], hidden_shape = [dh1, dh2])
-    rnn_cell = rnn.GRUCell(dh1*dh2)
+    rnn_cell = BilinearGRU(input_shape = [dx1,dx2], hidden_shape = [dh1, dh2])
+    #rnn_cell = rnn.GRUCell(dh1*dh2)
 
     outputs, states = tf.contrib.rnn.static_rnn(rnn_cell, x, dtype=tf.float32)
 
@@ -147,7 +147,7 @@ with tf.Session() as sess:
             end = start + batch_size
 
 	testloss = sess.run(loss, feed_dict={x: X_test, y: Y_test})
-	print("Epoch {}, train loss {}, testloss {}".format(epoch, batchloss / int(1024/batch_size), testloss))
+	print("Epoch {} train loss {}, testloss {}".format(epoch, batchloss / int(1024/batch_size), testloss))
 	predictions = sess.run(pred, feed_dict={x: X_test})
 
 imshow2(Y_test[1,...] , predictions[1,...])
