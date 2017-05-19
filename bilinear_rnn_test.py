@@ -10,16 +10,15 @@ import matplotlib.pyplot as plt
 dx1 = 10
 dx2 = 10
 # dim of hidden state
-dh1 = 50 
-dh2 = 50 
-
+dh1 = 30 
+dh2 = 30 
 #dim of output matrices
 dy1 = 10
 dy2 = 10
 
 training_size = 2000
-num_epochs = 300
-learning_rate = 0.005
+num_epochs = 200
+learning_rate = 0.001
 batch_size = 128
 n_steps = 100
 logs_path = '/tmp/tensorflow_logs/example'
@@ -70,7 +69,7 @@ def get_sample0():
 	x = np.random.normal(loc = 0.0, scale = 1.0, size=(dx1,dx2))
 	return x
 
-def generate_data(num_samples = 1000):
+def generate_data(num_samples = 2000):
 	data_x = np.zeros((num_samples, n_steps, dx1, dx2))
 	data_y = np.zeros((num_samples, dy1, dy2))
 
@@ -83,7 +82,11 @@ def generate_data(num_samples = 1000):
 	  data_y[m, :, :] =  0.5 * (data_x[m,-70,:,:] + data_x[m, -1,:,:])
 	return data_x, data_y
 			
-		
+def get_parameters():
+    variables_names = [v.name for v in tf.trainable_variables()]
+    values = sess.run(variables_names)
+    for k,v in zip(variables_names, values):
+        print(k, v)		
 	
 	
 x = tf.placeholder("float", [None, n_steps, dx1, dx2])
@@ -97,6 +100,55 @@ weights = {
 }
 
 
+'''
+def make_variable_state_initializer(**kwargs):
+    def variable_state_initializer(shape, batch_size, dtype, index):
+        args = kwargs.copy()
+
+        if args.get('name'):
+            args['name'] = args['name'] + '_' + str(index)
+        else:
+            args['name'] = 'init_state_' + str(index)
+
+        args['shape'] = shape
+        args['dtype'] = dtype
+
+        var = tf.get_variable(**args)
+        var = tf.expand_dims(var, 0)
+        var = tf.tile(var, tf.pack([batch_size] + [1] * len(shape)))
+        var.set_shape(_state_size_with_prefix(shape, prefix=[None]))
+        return var
+
+    return variable_state_initializer
+'''
+
+def get_state_variables(batch_size, cell):
+    # For each layer, get the initial state and make a variable out of it
+    # to enable updating its value.
+    state_variables = []
+    for state_c, state_h in cell.zero_state(batch_size, tf.float32):
+        state_variables.append(tf.contrib.rnn.LSTMStateTuple(
+            tf.Variable(state_c, trainable=False),
+            tf.Variable(state_h, trainable=False)))
+    # Return as a tuple, so that it can be fed to dynamic_rnn as an initial state
+    return tuple(state_variables)
+
+
+def get_state_update_op(state_variables, new_states):
+    # Add an operation to update the train states with the last state tensors
+    update_ops = []
+    for state_variable, new_state in zip(state_variables, new_states):
+        # Assign the new state to the state variables on this layer
+        update_ops.extend([state_variable[0].assign(new_state[0]),
+                           state_variable[1].assign(new_state[1])])
+    # Return a tuple in order to combine all update_ops into a single operation.
+    # The tuple's actual value should not be used.
+    return tf.tuple(update_ops)
+
+def get_state_reset_op(state_variables, cell, batch_size):
+    # Return an operation to set each variable in a list of LSTMStateTuples to zero
+    zero_states = cell.zero_state(batch_size, tf.float32)
+    return get_state_update_op(state_variables, zero_states)
 
 def RNN(x, weights):
 
@@ -104,7 +156,7 @@ def RNN(x, weights):
     # Current data input shape: (batch_size, n_steps, n_input1, n_input2)
     # Required shape: 'n_steps' tensors list of shape (batch_size, n_input1, n_input2)
 	
-   
+   #with tf.variable_scope('RNN_MODEL'):
     # Permuting batch_size and n_steps
     x = tf.transpose(x, [1, 0, 2, 3])
     # Reshaping to (n_steps*batch_size, n_input1*n_input2)
@@ -112,13 +164,15 @@ def RNN(x, weights):
     # Split to get a list of 'n_steps' tensors of shape (batch_size, n_input1*n_input2)
     x = tf.split(x, n_steps, 0)
 
-    #rnn_cell = BilinearGRU(input_shape = [dx1,dx2], hidden_shape = [dh1, dh2])
-    rnn_cell = BilinearLSTM(input_shape = [dx1,dx2], hidden_shape = [dh1, dh2])
+    rnn_cell = BilinearGRU(input_shape = [dx1,dx2], hidden_shape = [dh1, dh2])
+    #rnn_cell = BilinearSRNN(input_shape = [dx1,dx2], hidden_shape = [dh1, dh2])
+    #rnn_cell = BilinearLSTM(input_shape = [dx1,dx2], hidden_shape = [dh1, dh2])
     #rnn_cell = rnn.GRUCell(dh1*dh2)
 
+    init_state = rnn_cell.zero_state(batch_size, tf.float32)
+    #all_states = get_state_variables(batch_size, rnn_cell)
+
     outputs, states = tf.contrib.rnn.static_rnn(rnn_cell, x, dtype=tf.float32)
-
-
 
     out = tf.reshape(outputs[-1],[-1, dh1, dh2])
 
@@ -130,7 +184,7 @@ def RNN(x, weights):
 
 
 X_train,Y_train = generate_data(training_size)
-X_test, Y_test = generate_data(1000)
+X_test, Y_test = generate_data(3000)
 
 
 with tf.name_scope('Model'):
@@ -150,6 +204,7 @@ merged_summary_op = tf.summary.merge_all()
 
 
 with tf.Session() as sess:
+
     sess.run(init)
     summary_writer = tf.summary.FileWriter(logs_path, graph=tf.get_default_graph())
 
@@ -157,8 +212,9 @@ with tf.Session() as sess:
 
         start = 0
         end = batch_size
-	batchloss = 0.0
-	num_batches = int(training_size/batch_size) 
+        batchloss = 0.0
+        num_batches = int(training_size/batch_size) 
+
         for i in range( num_batches ):
 
             batch_x = X_train[start:end,...]
@@ -174,14 +230,18 @@ with tf.Session() as sess:
 
 	testloss = sess.run(loss, feed_dict={x: X_test, y: Y_test})
 	#print("Epoch {} train loss {}, testloss {}".format(epoch, batchloss / int(1024/batch_size), testloss))
-	print("{}\t{}\t{}".format(epoch, batchloss / int(1024/batch_size), testloss))
+	print("{}\t{}\t{}".format(epoch, batchloss / int(training_size/batch_size), testloss))
 	predictions = sess.run(pred, feed_dict={x: X_test})
 
-imshow2(Y_test[1,...] , predictions[1,...])
+    imshow2(Y_test[1,...] , predictions[1,...])
 
-print("Trainable parameters {}". format(count_trainable_parameters()))
-print("Run the command line:\n" \
+    print(get_parameters())
+
+
+
+    print("Trainable parameters {}". format(count_trainable_parameters()))
+    print("Run the command line:\n" \
           "--> tensorboard --logdir=/tmp/tensorflow_logs " \
-"\nThen open http://0.0.0.0:6006/ into your web browser")
+          "\nThen open http://0.0.0.0:6006/ into your web browser")
 
 

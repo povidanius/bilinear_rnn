@@ -30,6 +30,11 @@ class BilinearSRNN(tf.contrib.rnn.RNNCell):
     def output_size(self):
         return self._num_units
 
+    def zero_state(self, batch_size):
+        state_init = tf.Variable(tf.zeros([1, state_size()]))
+        state = tf.tile(state_init, [batch_size, 1])
+        return state
+
 
     def __call__(self, inputs, state, scope=None):
 
@@ -81,7 +86,13 @@ class BilinearGRU(tf.contrib.rnn.RNNCell):
 
     @property
     def output_size(self):
-        return self._num_units
+        return self._num_units    
+
+    def zero_state(self, batch_size, dtype):
+        state_init = tf.Variable(tf.zeros([1, self._num_units]))
+        state = tf.tile(state_init, [batch_size, 1])
+        return state
+
 
 
     def __call__(self, inputs, state, scope=None):
@@ -171,6 +182,11 @@ class BilinearLSTM(tf.contrib.rnn.RNNCell):
     @property
     def output_size(self):
         return self._num_units
+
+    def zero_state(self, batch_size):
+        state_init = tf.Variable(tf.zeros([1, state_size()]))
+        state = tf.tile(state_init, [batch_size, 1])
+        return state
 
 
     def __call__(self, inputs, state, scope=None):
