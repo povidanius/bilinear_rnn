@@ -219,19 +219,19 @@ h_{t} &= u_{t} \odot \tilde{h}_{t} + (1 - u_{t}) \odot h_{t-1}, \qedhere
 
 \noindent Reset gate $r_{t}$ controls integration of previous state $h_{t-1}$ into candidate state $\tilde{h}_{t}$, and update gate $u_{t}$ controls integration of candidate state into state update. GRU has $ 3 \cdot D_{h} \cdot (D_{x}  + D_{h} + 1) $ parameters and $D_{h}$-dimensional state variable. The effectiveness of GRU and LSTM is often very similar \cite{Jozefowicz}.
 
-
+Review recent innovations.
 
 
 \section{RNN with bilinear projections}
 
-Linear projections plays fundamental role in many machine learning algorithms. However, in its conventional form it ignores the internal structure of the data, which may be important. 
+Linear projections plays fundamental role in many machine learning algorithms. However, in its conventional form it ignores the internal structure of the data, which in certain cases may be important. 
 
 This section describes bilinear LSTM and GRU RNN's. We assume that the inputs $X_{t}$ are $D_{X}^{1} \times D_{X}^{2}$ matrices, and hidden state variables are $D_{H}^{1} \times D_{H}^{2}$ matrices. Bilinear SRNN can now be reformulated as:
 \begin{equation}
 \label{BSRNN}
 H_{t} = \phi(W_{1}X_{t}W_{2} + U_{1}H_{t-1}U_{2} + B),
 \end{equation}
-\noindent where $\phi$ is non-linear activation function, and parameter matrices $W_{1}$,$W_{2}$,$U_{1}$, $U_{2}$ and $B$ of appropriate dimensions.
+\noindent where $\phi$ is non-linear activation function, and parameter matrices $W_{1}$, $W_{2}$, $U_{1}$, $U_{2}$ and $B$ of appropriate dimensions.
 
 We hypothesise that bilinear projections allow to exploit linear row-column structures of input matrix. Comparing to conventional RNN's, bilinear RNN's are also more compact in terms of parameters (see Table~\ref{table:parameters_and_states}).
 
@@ -245,7 +245,7 @@ F_{t} &=\sigma(W_{1}^{f}X_{t}W_{2}^{f} + U_{1}^{f}H_{t-1}U_{2}^{f}  +  B^{f})\\
 O_{t} &=\sigma(W_{1}^{o}X_{t}W_{2}^{o} + U_{o}^{i}H_{t-1}U_{2}^{o}  +  B^{o})\\
 \tilde{C}_{t} &=\tanh(W_{1}^{c}X_{t}W_{2}^{c} + U_{1}^{c}H_{t-1}U_{2}^{c}  +  B^{c})\\
 C_{t} &= F_{t} \odot C_{t-1} + I_{t} \odot \tilde{C}_{t}\\
-H_{t} &= O_{t}\odot \tanh(C_{t}),
+H_{t} &= O_{t}\odot \tanh(C_{t}).
 \end{split}.
 \end{align}
 
@@ -281,6 +281,10 @@ H_{t} &= U_{t}\odot \tilde{H}_{t} + (1_{D_{H}^{1}}1_{D_{H}^{2}}^{T} - U_{t})\odo
 \label{table:parameters_and_states}
 \end{table}
 
+\subsection{Tricks: sequences of different dimensions}
+If input sequence consists of matrices of different dimensions, dimension equalization may be conducted by introducing additional parameter matrices $P_{i}$ and $Q_{i}$, and mapping the input sequence $X_{1}, X_{2},...,X_{m}$ to a sequence of matrices of equal dimensions $P_{1}X_{1}Q_{1},P_{2}X_{2}Q_{2},...,P_{m}X_{m}Q_{m}$,
+where $m$ is sequence length.
+
 
 
 
@@ -292,7 +296,8 @@ In this section we describe computer experiments with suggested bilinear RNN's.
 
 We will investigate detection of patterns in a sequence of input matrices. We generate toy data set consisting of $2000$ training, and $1000$ testing 
 sequences of matrix inputs and matrix outputs. Each input sequence consists of $20$
-$10 \times 10$ matrices $X_{1}, X_{2}, ... X_{20}$ composed of i.i.d. Gaussian entries, and $10 \times 10$ output matrix defined by so that it would depend both from long and short range $Y =  \frac{1}{2} (X_{5} + X_{20})$. We estimate the output from last hidden state $H_{20}$ by $Y = UH_{20}V + B$, where $U$, $V$ and $B$ are parameter matrices of appropriate dimensions. We train RNN models for $1000$ epochs using Adam~\cite{Kingma} optimizer, and data batches of $128$ elements. In Table~\ref{table:patterns_in_matrix_sequence} we report mean squared errors on the testing set.
+$10 \times 10$ matrices $X_{1}, X_{2}, ... X_{20}$ composed of ....., and $10 \times 10$ output matrix defined by so that it would depend both from long and short range $Y =  \frac{1}{2} (X_{5} + X_{20})$. We estimate the output from last hidden state $H_{20}$ by $Y = UH_{20}V + B$, where $U$, $V$ and $B$ are parameter matrices of appropriate dimensions. We train RNN models for $1000$ epochs using Adam~\cite{Kingma} optimizer, and data batches of $128$ elements. In Table~\ref{table:patterns_in_matrix_sequence} we report mean squared errors on the testing set.
+
 
 \begin{table}
 \begin{tabular}{ |l|l|l| }
@@ -314,7 +319,7 @@ $10 \times 10$ matrices $X_{1}, X_{2}, ... X_{20}$ composed of i.i.d. Gaussian e
 
 
 
-%\subsection{Recovering eigendecomposition}
+
 %\begin{align}
 % Y(i,j) &= \begin{cases}
 %	1 & \text{if} \max(X_{10}(i,j), X_{8}(i,j)) \geq  \max(X_{2}%(i,j),X_{3}(i,j))\\
@@ -333,7 +338,7 @@ $10 \times 10$ matrices $X_{1}, X_{2}, ... X_{20}$ composed of i.i.d. Gaussian e
 
 \section{Conclusions}
 
-We applied bilinear products to derive modifications of popular recurrent neural networks: Elman (SRNN), GRU and LSTM. Resulting models are well suited for matrix-valued data sequences, are more economical in terms of parameters. Although standard RNN's are also applicable to matrix-valued inputs of specific dimensions ($D_{X}^{2} = D_{H}^{2}$), they omit linear projections of columns, which may be important. Computer experiments also (hopefully will) confirm our hypothesis, that bilinear product allow to exploit structure of data matrices in recurrent neural networks.
+We applied bilinear products to derive modifications of popular recurrent neural networks: Elman (SRNN), GRU and LSTM. Resulting models are well suited for matrix-valued data sequences, are more economical in terms of parameters, and consequently may be used with smaller data sets. Although standard RNN's are also applicable to matrix-valued inputs of specific dimensions ($D_{X}^{2} = D_{H}^{2}$), they omit linear projections of columns, which may be important. Computer experiments also (hopefully will) confirm our hypothesis, that bilinear product allow to exploit structure of data matrices in recurrent neural networks.
 
 
  

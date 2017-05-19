@@ -6,16 +6,24 @@ import numpy as np
 from helper import  *
 import matplotlib.pyplot as plt
 
+# dim of input matrices
 dx1 = 10
 dx2 = 10
-dh1 = 20 #20
-dh2 = 20 #20
+# dim of hidden state
+dh1 = 30 
+dh2 = 30 
+
+#dim of output matrices
 dy1 = 10
 dy2 = 10
-num_epochs = 1000
-learning_rate = 0.002
+
+training_size = 2000
+num_epochs = 300
+learning_rate = 0.005
 batch_size = 128
-n_steps = 20
+n_steps = 100
+logs_path = '/tmp/tensorflow_logs/example'
+
 
 def imshow(x):
 	plt.imshow(x,cmap='gray')
@@ -72,7 +80,7 @@ def generate_data(num_samples = 1000):
 	  	data_x[m, n,:,:] =  get_sample()
 
 	  #data_y[m, :, :] = np.maximum(data_x[m,1,:,:], 0.5 * (data_x[m, 18,:,:] + data_x[m, 19,:,:]))
-	  data_y[m, :, :] =  0.5 * (data_x[m,-15,:,:] + data_x[m, -1,:,:])
+	  data_y[m, :, :] =  0.5 * (data_x[m,-70,:,:] + data_x[m, -1,:,:])
 	return data_x, data_y
 			
 		
@@ -104,7 +112,8 @@ def RNN(x, weights):
     # Split to get a list of 'n_steps' tensors of shape (batch_size, n_input1*n_input2)
     x = tf.split(x, n_steps, 0)
 
-    rnn_cell = BilinearGRU(input_shape = [dx1,dx2], hidden_shape = [dh1, dh2])
+    #rnn_cell = BilinearGRU(input_shape = [dx1,dx2], hidden_shape = [dh1, dh2])
+    rnn_cell = BilinearLSTM(input_shape = [dx1,dx2], hidden_shape = [dh1, dh2])
     #rnn_cell = rnn.GRUCell(dh1*dh2)
 
     outputs, states = tf.contrib.rnn.static_rnn(rnn_cell, x, dtype=tf.float32)
@@ -113,46 +122,66 @@ def RNN(x, weights):
 
     out = tf.reshape(outputs[-1],[-1, dh1, dh2])
 
-    # show!	
+    # slow!	
     prediction = dot(tf.transpose(dot(weights['left'], out), [1, 0, 2]), weights['right']) + weights['biases']
     #prediction = out
 
     return prediction
 
 
-X_train,Y_train = generate_data(5000)
+X_train,Y_train = generate_data(training_size)
 X_test, Y_test = generate_data(1000)
-pred = RNN(x, weights)
-loss = tf.reduce_mean(tf.square(tf.subtract(pred, y))) 
-optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
+
+
+with tf.name_scope('Model'):
+    pred = RNN(x, weights)
+with tf.name_scope('Loss'):
+    loss = tf.reduce_mean(tf.square(tf.subtract(pred, y))) 
+with tf.name_scope("Optimizer"):
+    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
+
+
 init = tf.global_variables_initializer()
+
+tf.summary.scalar("loss", loss)
+merged_summary_op = tf.summary.merge_all()
+
+
 
 
 with tf.Session() as sess:
     sess.run(init)
+    summary_writer = tf.summary.FileWriter(logs_path, graph=tf.get_default_graph())
+
     for epoch in range(num_epochs):
 
         start = 0
         end = batch_size
 	batchloss = 0.0
-        for i in range( int(1024/batch_size) ):
+	num_batches = int(training_size/batch_size) 
+        for i in range( num_batches ):
 
             batch_x = X_train[start:end,...]
             batch_y = Y_train[start:end,...]
 
-            sess.run(optimizer, feed_dict={x: batch_x, y: batch_y})
+            #sess.run(optimizer, feed_dict={x: batch_x, y: batch_y})
+            _, c, summary = sess.run([optimizer, loss, merged_summary_op], feed_dict={x: batch_x, y: batch_y})
 	    batchloss = batchloss + sess.run(loss, feed_dict={x: batch_x, y: batch_y})
+	    summary_writer.add_summary(summary, epoch*num_batches + i)
 
             start = end
             end = start + batch_size
 
 	testloss = sess.run(loss, feed_dict={x: X_test, y: Y_test})
-	print("Epoch {} train loss {}, testloss {}".format(epoch, batchloss / int(1024/batch_size), testloss))
+	#print("Epoch {} train loss {}, testloss {}".format(epoch, batchloss / int(1024/batch_size), testloss))
+	print("{}\t{}\t{}".format(epoch, batchloss / int(1024/batch_size), testloss))
 	predictions = sess.run(pred, feed_dict={x: X_test})
 
 imshow2(Y_test[1,...] , predictions[1,...])
 
 print("Trainable parameters {}". format(count_trainable_parameters()))
-
+print("Run the command line:\n" \
+          "--> tensorboard --logdir=/tmp/tensorflow_logs " \
+"\nThen open http://0.0.0.0:6006/ into your web browser")
 
 
