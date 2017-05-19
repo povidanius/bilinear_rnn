@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 dx1 = 10
 dx2 = 10
 # dim of hidden state
-dh1 = 30 
-dh2 = 30 
+dh1 = 50 
+dh2 = 50 
 
 #dim of output matrices
 dy1 = 10

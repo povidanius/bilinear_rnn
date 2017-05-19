@@ -283,7 +283,7 @@ H_{t} &= U_{t}\odot \tilde{H}_{t} + (1_{D_{H}^{1}}1_{D_{H}^{2}}^{T} - U_{t})\odo
 
 \subsection{Tricks: sequences of different dimensions}
 If input sequence consists of matrices of different dimensions, dimension equalization may be conducted by introducing additional parameter matrices $P_{i}$ and $Q_{i}$, and mapping the input sequence $X_{1}, X_{2},...,X_{m}$ to a sequence of matrices of equal dimensions $P_{1}X_{1}Q_{1},P_{2}X_{2}Q_{2},...,P_{m}X_{m}Q_{m}$,
-where $m$ is sequence length.
+where $m$ is sequence length. The same may be used when output sequence of different dimensions is required.
 
 
 
@@ -338,7 +338,7 @@ $10 \times 10$ matrices $X_{1}, X_{2}, ... X_{20}$ composed of ....., and $10 \t
 
 \section{Conclusions}
 
-We applied bilinear products to derive modifications of popular recurrent neural networks: Elman (SRNN), GRU and LSTM. Resulting models are well suited for matrix-valued data sequences, are more economical in terms of parameters, and consequently may be used with smaller data sets. Although standard RNN's are also applicable to matrix-valued inputs of specific dimensions ($D_{X}^{2} = D_{H}^{2}$), they omit linear projections of columns, which may be important. Computer experiments also (hopefully will) confirm our hypothesis, that bilinear product allow to exploit structure of data matrices in recurrent neural networks.
+We applied bilinear products to derive modifications of popular recurrent neural networks: Elman (SRNN), GRU and LSTM. Resulting models are well suited for matrix-valued data sequences, are more economical in terms of parameters, and consequently may be used with smaller data sets. The idea easily can be extended to tensor inputs as well. Although standard RNN's are also applicable to matrix-valued inputs of specific dimensions ($D_{X}^{2} = D_{H}^{2}$), they omit linear projections of columns, which may be important. Computer experiments also (hopefully will) confirm our hypothesis, that bilinear product allow to exploit structure of data matrices in recurrent neural networks.
 
 
  
